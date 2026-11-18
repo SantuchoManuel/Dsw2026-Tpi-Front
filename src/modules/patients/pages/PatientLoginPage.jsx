@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../../shared/components/Button';
 import useAuth from '../../auth/hook/useAuth';
-import { frontendErrorMessage } from '../../auth/helpers/backendError';
 
 function PatientLoginPage() {
   const [errorMessage, setErrorMessage] = useState('');
@@ -12,31 +11,26 @@ function PatientLoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({ defaultValues: { username: '', password: '' } });
+  } = useForm({ defaultValues: { email: '', dni: '' } });
 
   const navigate = useNavigate();
   const { singinPatient } = useAuth();
 
   const onValid = async (formData) => {
     try {
-      const { error } = await singinPatient(
-        formData.username,
-        formData.password
-      );
+      const { error } = await singinPatient(formData.email, formData.dni);
 
       if (error) {
-        setErrorMessage(error.frontendErrorMessage || 'Credenciales inválidas');
+        setErrorMessage(
+          error?.response?.data?.message || 'Credenciales inválidas'
+        );
 
         return;
       }
 
       navigate('/');
-    } catch (error) {
-      if (error?.response?.data?.code) {
-        setErrorMessage(frontendErrorMessage[error?.response?.data?.code]);
-      } else {
-        setErrorMessage('Error al conectar con el servicio de pacientes');
-      }
+    } catch {
+      setErrorMessage('Error al conectar con el servicio de pacientes');
     }
   };
 
@@ -101,26 +95,26 @@ function PatientLoginPage() {
                 type="email"
                 placeholder="paciente@medportal.com"
                 className={`w-full border rounded-lg pl-10 pr-3.5 py-2.5 text-sm bg-white text-med-text-main placeholder-med-text-muted focus:outline-none focus:ring-2 focus:ring-med-primary-600 focus:border-transparent ${
-                  errors.username
+                  errors.email
                     ? 'border-red-400 bg-red-50/20'
                     : 'border-med-border'
                 }`}
-                {...register('username', {
+                {...register('email', {
                   required: 'El correo electrónico es obligatorio',
                 })}
               />
             </div>
-            {errors.username && (
+            {errors.email && (
               <p className="text-xs text-red-500 font-medium">
-                {errors.username.message}
+                {errors.email.message}
               </p>
             )}
           </div>
 
-          {/* Contraseña con botón mostrar/ocultar */}
+          {/* DNI / Numoero de Identificacion*/}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-med-text-main">
-              Contraseña
+              DNI / Numero de Identificaion
             </label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-med-text-muted">
@@ -139,15 +133,23 @@ function PatientLoginPage() {
                 </svg>
               </span>
               <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
+                type="number"
+                placeholder="Numero de Documento"
                 className={`w-full border rounded-lg pl-10 pr-10 py-2.5 text-sm bg-white text-med-text-main placeholder-med-text-muted focus:outline-none focus:ring-2 focus:ring-med-primary-600 focus:border-transparent ${
-                  errors.password
+                  errors.dni
                     ? 'border-red-400 bg-red-50/20'
                     : 'border-med-border'
                 }`}
-                {...register('password', {
-                  required: 'La contraseña es obligatoria',
+                {...register('dni', {
+                  required: 'El DNI es obligatorio',
+                  minLength: {
+                    value: 7,
+                    message: 'El DNI debe tener al menos 7 digitos',
+                  },
+                  maxLength: {
+                    value: 8,
+                    message: 'El DNI debe tener al menos 8 digitos',
+                  },
                 })}
               />
               <button
@@ -198,9 +200,9 @@ function PatientLoginPage() {
                 )}
               </button>
             </div>
-            {errors.password && (
+            {errors.dni && (
               <p className="text-xs text-red-500 font-medium">
-                {errors.password.message}
+                {errors.dni.message}
               </p>
             )}
           </div>

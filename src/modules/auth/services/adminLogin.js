@@ -1,19 +1,11 @@
 import { instance } from '../../shared/api/axiosInstance';
 
-export const loginAdmin = async (Email, password) => {
-  if (
-    (Email === 'admin' ||
-      Email === 'admin@medportal.com' ||
-      Email === 'admin@test.com') &&
-    password === 'admin123'
-  ) {
-    return { data: 'mock-admin-token-12345', error: null };
-  }
-
+//con instance.post axios se conecta a la url del back
+export const loginAdmin = async (email, password) => {
   const response = await instance.post('api/auth/admin/login', {
-    Email,
+    email,
     password,
   });
 
-  return { data: response.data.token, error: null };
+  return { data: response.data, error: null }; //response.data tiene lo que seria el token { token: "...", role: "ADMINISTRADOR"}
 };

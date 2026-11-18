@@ -1,19 +1,10 @@
-import { instance } from '../../shared/api/axiosInstance';
+import { instance } from '..//..//shared/api/axiosInstance';
 
-export const loginPatient = async (Email, Dni) => {
-  if (
-    (Email === 'paciente' ||
-      Email === 'paciente@medportal.com' ||
-      Email === 'paciente@test.com') &&
-    Dni === 12345678
-  ) {
-    return { data: 'mock-patient-token-67890', error: null };
-  }
-
+export const loginPatient = async (email, dni) => {
   const response = await instance.post('api/auth/patient/login', {
-    Email,
-    Dni,
+    email,
+    dni: Number(dni), //usamos el number para que el back lo reciba como int
   });
 
-  return { data: response.data.token, error: null };
+  return { data: response.data, error: null };
 };
