@@ -29,7 +29,7 @@ export const createSpecialty = async ({ name, description }) => {
 
 // Actualizar una especialidad existente
 export const updateSpecialty = async (id, { name, description }) => {
-  const response = await instance.put('api/specialities/${id}', {
+  const response = await instance.put(`api/specialities/${id}`, {
     name,
     description,
   });
@@ -38,7 +38,7 @@ export const updateSpecialty = async (id, { name, description }) => {
 };
 
 export const deleteSpecialty = async (id) => {
-  const response = await instance.delete('api/specialities/${id}');
+  const response = await instance.delete(`api/specialities/${id}`);
 
   return response.data;
 };
