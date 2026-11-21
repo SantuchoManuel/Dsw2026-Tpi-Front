@@ -268,56 +268,45 @@ function AppointmentsSearchPage() {
                     No se encontraron citas con esos filtros.
                   </td>
                 </tr>
-              ) : (
-                appointments.map((item) => {
-                  const fecha = new Date(item.appointmentsId ? item.fecha : null);
-                  return (
-                    <tr key={item.appointmentsId} className="hover:bg-gray-50/70 transition-colors">
-                      {/* Fecha */}
-                      <td className="px-6 py-4">
-                        <p className="font-bold text-med-primary-900 text-sm">
-                          {fecha.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                        </p>
-                        <p className="text-xs text-med-text-muted mt-0.5">
-                          {fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </td>
-                      {/* Especialidad / Doctor */}
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-med-primary-100 text-med-primary-700 flex items-center justify-center shrink-0">
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="font-semibold text-med-primary-900">
-                              {item.doctor?.specialty?.name || 'Sin especialidad'}
-                            </p>
-                            <p className="text-xs text-med-text-muted">{item.doctor?.name}</p>
-                          </div>
+                ) : (
+                appointments.map((item) => (
+                  <tr key={item.appointmentsId} className="hover:bg-gray-50/70 transition-colors">
+                    <td className="px-6 py-4">
+                      <p className="font-mono text-xs text-med-text-muted">
+                        #{item.appointmentsId?.slice(0, 8)}...
+                      </p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-med-primary-100 text-med-primary-700 flex items-center justify-center shrink-0">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                          </svg>
                         </div>
-                      </td>
-                      {/* Paciente */}
-                      <td className="px-6 py-4">
-                        <p className="font-semibold text-med-text-main">
-                          {item.patient?.fullName || 'Sin nombre'}
-                        </p>
-                        <p className="text-xs text-med-text-muted mt-0.5">
-                          DNI: {item.patient?.dni}
-                        </p>
-                      </td>
-                      {/* Estado */}
-                      <td className="px-6 py-4 text-center">
-                        {getStatusBadge(item.appointmentsStatus)}
-                      </td>
-                      {/* Acciones */}
-                      <td className="px-6 py-4 text-right">
-                        <span className="text-xs text-med-text-muted">—</span>
-                      </td>
-                    </tr>
-                  );
-                })
+                        <div>
+                          <p className="font-semibold text-med-primary-900">
+                            {item.doctor?.specialty?.name}
+                          </p>
+                          <p className="text-xs text-med-text-muted">
+                            {item.doctor?.name}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-semibold text-med-text-main">
+                        {item.patient?.fullName || 'Sin nombre'}
+                      </p>
+                      <p className="text-xs text-med-text-muted mt-0.5">DNI: {item.patient?.dni}</p>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {getStatusBadge(item.appointmentsStatus)}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <span className="text-xs text-med-text-muted">—</span>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
