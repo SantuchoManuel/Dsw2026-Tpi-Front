@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
 import useAuth from '../../auth/hook/useAuth';
-import { getDoctors, getDoctorAvailabilities } from '../../doctors/services/doctorsService';
+import { getDoctors, getDoctorAvailabilities, getDoctorSlots } from '../../doctors/services/doctorsService';
 import { createAppointment } from '../../appointments/services/appointmentsService';
 
 function PatientHome() {
@@ -12,20 +12,28 @@ function PatientHome() {
 
   const [specialties, setSpecialties] = useState([]);
   const [doctors, setDoctors] = useState([]);
-  const [availabilities, setAvailabilities] = useState([]); 
+  const [availabilities, setAvailabilities] = useState([]);
+
+  const [slots, setSlots] = useState([]);
+
+
   const [selectedSpecialtyId, setSelectedSpecialtyId] = useState('');
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
-  const [selectedSlotId, setSelectedSlotId] = useState(''); 
+  const [selectedSlotId, setSelectedSlotId] = useState('');
   const [reason, setReason] = useState('');
   const [loadingSpecialties, setLoadingSpecialties] = useState(false);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
+
   const [loadingSlots, setLoadingSlots] = useState(false);
+
   const [submitting, setSubmitting] = useState(false);
   const [confirmedModal, setConfirmedModal] = useState(false);
   const [confirmedData, setConfirmedData] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+
   const currentDoctor = doctors.find((d) => d.id === selectedDoctorId) || null;
-  const currentSlot = availabilities.find((s) => s.id === selectedSlotId) || null;
+  const currentSlot =
+    slots.find((s) => (s.availabilitySlotId || s.id) === selectedSlotId) || null;
 
   useEffect(() => {
     const fetchSpecialtiesFromDoctors = async () => {
@@ -56,7 +64,7 @@ function PatientHome() {
     if (!selectedSpecialtyId) {
       setDoctors([]);
       setSelectedDoctorId('');
-      setAvailabilities([]);
+      setSlots([]);
       setSelectedSlotId('');
       return;
     }
@@ -70,7 +78,7 @@ function PatientHome() {
         );
         setDoctors(filtered);
         setSelectedDoctorId('');
-        setAvailabilities([]);
+        setSlots([]);
         setSelectedSlotId('');
       } catch (err) {
         console.error('Error cargando doctores:', err);
@@ -83,29 +91,50 @@ function PatientHome() {
 
   useEffect(() => {
     if (!selectedDoctorId) {
-      setAvailabilities([]);
+      setSlots([]);
       setSelectedSlotId('');
       return;
     }
-    const fetchAvailabilities = async () => {
+    const fetchSlots = async () => {
       try {
         setLoadingSlots(true);
-        const data = await getDoctorAvailabilities(selectedDoctorId);
-        // data es una lista de turnos disponibles con id, fecha, horaDeInicio, etc.
-        setAvailabilities(data || []);
+        const data = await getDoctorSlots(selectedDoctorId);
+        // Filtramos solo los turnos disponibles para reservar
+        const availableSlots = (data || []).filter(
+          (s) =>
+            s.status === 'AVAILABLE' ||
+            s.status === 0 ||
+            s.status === '0' ||
+            !s.status
+        );
+        setSlots(availableSlots);
         setSelectedSlotId('');
       } catch (err) {
-        console.error('Error cargando disponibilidades:', err);
+        console.error('Error cargando turnos del doctor:', err);
+        setSlots([]);
       } finally {
         setLoadingSlots(false);
       }
     };
-    fetchAvailabilities();
+    fetchSlots();
   }, [selectedDoctorId]);
+
+  const parseSlotDate = (slot) => {
+    if (!slot) return null;
+    if (slot.fecha) return new Date(slot.fecha);
+    const dateStr = slot.date || slot.fecha;
+    const timeStr = slot.startTime || slot.horaDeInicio || '00:00';
+    if (!dateStr) return null;
+    return new Date(`${dateStr}T${timeStr.length === 5 ? timeStr + ':00' : timeStr}`);
+  };
 
   const handleConfirmAppointment = async () => {
     if (!selectedDoctorId || !selectedSlotId || !reason.trim()) {
       setErrorMessage('Seleccioná un doctor, un horario y escribí el motivo de la consulta.');
+      return;
+    }
+    if (!user?.dni) {
+      setErrorMessage('No se encontró el DNI del paciente.');
       return;
     }
     try {
@@ -114,11 +143,15 @@ function PatientHome() {
       const result = await createAppointment({
         doctorId: selectedDoctorId,
         availabilitySlotId: selectedSlotId,
-        patient: { dni: user.dni },
+        patient: { dni: Number(user.dni) },
         reason: reason.trim(),
       });
       setConfirmedData(result);
       setConfirmedModal(true);
+      // Actualizamos los slots para no mostrar el que acabamos de reservar
+      setSlots((prev) =>
+        prev.filter((s) => (s.availabilitySlotId || s.id) !== selectedSlotId)
+      );
     } catch (err) {
       setErrorMessage(
         err?.response?.data?.details?.[0]?.issue ||
@@ -203,7 +236,7 @@ function PatientHome() {
             <Button
               type="button"
               className="w-full flex items-center justify-center gap-2 bg-med-primary-900 hover:bg-med-primary-800 text-white font-medium py-2.5 rounded-lg shadow-sm"
-              onClick={() => {}}
+              onClick={() => { }}
             >
               <svg
                 className="w-4 h-4"
@@ -258,7 +291,7 @@ function PatientHome() {
         )}
       </Card>
 
-      {/* 3. Selector Semanal de Disponibilidad */}
+      {/* 3. Selector Semanal de Turnos */}
       <Card className="p-5 sm:p-6 border-med-border">
         <div className="mb-4">
           <h3 className="font-bold text-sm sm:text-base text-med-primary-900">
@@ -276,31 +309,35 @@ function PatientHome() {
           <p className="text-xs text-med-text-muted text-center py-6">
             Cargando horarios...
           </p>
-        ) : availabilities.length === 0 ? (
+        ) : slots.length === 0 ? (
           <p className="text-xs text-med-text-muted text-center py-6">
             Este doctor no tiene turnos disponibles en este momento.
           </p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {availabilities.map((slot) => {
-              const fecha = new Date(slot.fecha ?? `${slot.date}T${slot.startTime ?? slot.horaDeInicio}`);
-              const isSelected = selectedSlotId === slot.id;
+            {slots.map((slot) => {
+              const slotId = slot.availabilitySlotId || slot.id;
+              const fecha = parseSlotDate(slot);
+              const isSelected = selectedSlotId === slotId;
+              const timeDisplay = slot.startTime || (fecha ? fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '');
+
               return (
                 <button
-                  key={slot.id}
+                  key={slotId}
                   type="button"
-                  onClick={() => setSelectedSlotId(slot.id)}
-                  className={`py-2.5 px-3 text-xs font-semibold rounded-lg border transition-all text-center ${
-                    isSelected
-                      ? 'bg-emerald-400 text-white border-emerald-400 shadow-sm'
-                      : 'bg-white border-med-border text-med-primary-900 hover:border-med-primary-600 hover:bg-med-primary-50/50'
-                  }`}
+                  onClick={() => setSelectedSlotId(slotId)}
+                  className={`py-2.5 px-3 text-xs font-semibold rounded-lg border transition-all text-center ${isSelected
+                    ? 'bg-emerald-400 text-white border-emerald-400 shadow-sm'
+                    : 'bg-white border-med-border text-med-primary-900 hover:border-med-primary-600 hover:bg-med-primary-50/50'
+                    }`}
                 >
-                  <span className="block font-bold">
-                    {fecha.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit' })}
+                  <span className="block font-bold capitalize">
+                    {fecha
+                      ? fecha.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit' })
+                      : slot.date}
                   </span>
                   <span className="block mt-0.5">
-                    {fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs
+                    {timeDisplay} hs
                   </span>
                 </button>
               );
@@ -335,12 +372,20 @@ function PatientHome() {
               <p className="text-base sm:text-lg font-bold text-med-primary-900 mt-0.5 flex items-center gap-2">
                 <span>📅</span>
                 <span>
-                  {new Date(currentSlot.fecha ?? `${currentSlot.date}T${currentSlot.startTime ?? currentSlot.horaDeInicio}`).toLocaleDateString('es-AR', {
-                    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
-                  })}{' '}
-                  {new Date(currentSlot.fecha ?? `${currentSlot.date}T${currentSlot.startTime ?? currentSlot.horaDeInicio}`).toLocaleTimeString('es-AR', {
-                    hour: '2-digit', minute: '2-digit'
-                  })} hs
+                  {(() => {
+                    const d = parseSlotDate(currentSlot);
+                    if (!d) return '';
+                    const dateFormatted = d.toLocaleDateString('es-AR', {
+                      weekday: 'long',
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric',
+                    });
+                    const timeFormatted =
+                      currentSlot.startTime ||
+                      d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+                    return `${dateFormatted} - ${timeFormatted} hs`;
+                  })()}
                 </span>
               </p>
               <p className="text-xs text-med-text-sub mt-0.5">
