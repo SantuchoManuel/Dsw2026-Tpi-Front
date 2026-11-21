@@ -20,6 +20,7 @@ function OverviewPage() {
     try {
       setLoadingDoctors(true);
       const data = await getDoctors({ pageSize: 5, pageIndex: page, name });
+
       setDoctors(data.data || []);
       setTotalDoctors(data.total || 0);
       setTotalPages(Math.ceil((data.total || 0) / 5) || 1);
@@ -30,10 +31,10 @@ function OverviewPage() {
     }
   };
 
-
   const fetchSpecialities = async () => {
     try {
       const data = await getSpecialties({ pageSize: 1, pageIndex: 1 });
+
       setTotalSpecialities(data.total || 0);
     } catch (err) {
       console.error('Error al cargar especialidades:', err);
@@ -223,15 +224,18 @@ function OverviewPage() {
           <h2 className="text-base font-bold text-med-primary-900">
             Directorio de Profesionales Médicos
           </h2>
-          <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-72">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="relative w-full sm:w-72"
+          >
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-med-text-muted">
               <svg
                 className="w-4 h-4"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
-               >
-               <path
+              >
+                <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
@@ -262,13 +266,19 @@ function OverviewPage() {
             <tbody className="divide-y divide-med-border-subtle text-sm">
               {loadingDoctors ? (
                 <tr>
-                  <td colSpan="4" className="px-6 py-8 text-center text-med-text-muted text-xs">
+                  <td
+                    colSpan="4"
+                    className="px-6 py-8 text-center text-med-text-muted text-xs"
+                  >
                     Cargando doctores...
                   </td>
                 </tr>
               ) : doctors.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="px-6 py-8 text-center text-med-text-muted text-xs">
+                  <td
+                    colSpan="4"
+                    className="px-6 py-8 text-center text-med-text-muted text-xs"
+                  >
                     No hay doctores registrados.
                   </td>
                 </tr>
@@ -287,12 +297,13 @@ function OverviewPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-med-text-sub">
-                      {doc.speciality.name}
+                      {doc.speciality?.name || 'Sin especialidad'}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => navigate('/admin/doctors')}
-                        className="text-xs font-semibold text-med-primary-700 hover:text-med-primary-900"
+                        className="text-xs font-semibold text-med-primary-700 hover:text-med-primary-900
+                        hover:underline cursor-pointer"
                       >
                         Ver Detalle
                       </button>

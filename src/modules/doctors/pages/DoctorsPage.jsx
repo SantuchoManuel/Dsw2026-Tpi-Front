@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Stethoscope, Save, IdCard, Info, Timer } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
@@ -34,6 +35,20 @@ function DoctorsPage() {
   const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
   const [availabilityError, setAvailabilityError] = useState('');
   const [availabilitySuccess, setAvailabilitySuccess] = useState('');
+
+    //estados para la nueva vista de disponibilidad que se pide en el pdf
+  const [selectedDoctorId, setSelectedDoctorId] = useState('');
+  const [weeklySchedule, setWeeklySchedule] = useState([
+    { day: 'Lunes', active: true, startTime: '08:00', endTime: '16:00' },
+    { day: 'Martes', active: true, startTime: '08:00', endTime: '16:00' },
+    { day: 'Miércoles', active: true, startTime: '08:00', endTime: '12:00' },
+    { day: 'Jueves', active: true, startTime: '09:00', endTime: '18:00' },
+    { day: 'Viernes', active: true, startTime: '08:00', endTime: '14:00' },
+    { day: 'Sábado', active: false, startTime: '', endTime: '' },
+  ]);
+
+  //esto es para obtener el objeto del doctor seleccionado para mostrar su tarjeta informativa
+  const selectedDoctorObj = doctors.find((d) => String(d.id) === String(selectedDoctorId));
 
   const {
     register: registerAvail,
@@ -175,6 +190,71 @@ function DoctorsPage() {
     setIsAvailabilityModalOpen(true);
   };
 
+    //para cambiar estado activo/inactivo de un día
+  const handleToggleDay = (index) => {
+    setWeeklySchedule((prev) =>
+      prev.map((item, i) =>
+        i === index
+          ? {
+              ...item,
+              active: !item.active,
+              startTime: !item.active ? '08:00' : '',
+              endTime: !item.active ? '16:00' : '',
+            }
+          : item
+      )
+    );
+  };
+
+  //para modificar hora de entrada o salida
+  const handleTimeChange = (index, field, value) => {
+    setWeeklySchedule((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+    );
+  };
+
+  //para guardar la disponibilidad
+  const handleSaveAvailability = async () => {
+    if (!selectedDoctorId) {
+      setAvailabilityError('Por favor seleccione un profesional.');
+      return;
+    }
+
+    const activeDays = weeklySchedule
+      .filter((d) => d.active)
+      .map((d) => ({
+        day: d.day,
+        startTime: d.startTime,
+        endTime: d.endTime,
+      }));
+
+    if (activeDays.length === 0) {
+      setAvailabilityError('Debe activar al menos un día con horario.');
+      return;
+    }
+
+    try {
+      setAvailabilityError('');
+      setAvailabilitySuccess('');
+      await createAvailability({
+        doctorId: selectedDoctorId,
+        days: activeDays,
+      });
+      setAvailabilitySuccess('¡Disponibilidad guardada con exito!');
+      setTimeout(() => {
+        setIsAvailabilityModalOpen(false);
+        setAvailabilitySuccess('');
+      }, 1500);
+    } catch (err) {
+      const backendDetail = err?.response?.data?.details?.[0]?.issue;
+      setAvailabilityError(
+        backendDetail ||
+          err?.response?.data?.message ||
+          'Error al guardar la disponibilidad horaria.'
+      );
+    }
+  };
+
   //para enviar la disponibilidad a la API
   const onSubmitAvailability = async (formData) => {
     try {
@@ -190,6 +270,7 @@ function DoctorsPage() {
           },
         ],
       };
+
       await createAvailability(payload);
       setAvailabilitySuccess('¡Disponibilidad asignada con correctamente!');
       setTimeout(() => {
@@ -197,15 +278,367 @@ function DoctorsPage() {
         setAvailabilitySuccess('');
       }, 1500);
     } catch (err) {
-        const backendDetail = err?.response?.data?.details?.[0]?.issue;
-        setAvailabilityError(
-          backendDetail ||
-            err?.response?.data?.message ||
-            'Error al guardar la disponibilidad horaria'
-        );
+      const backendDetail = err?.response?.data?.details?.[0]?.issue;
+
+      setAvailabilityError(
+        backendDetail ||
+          err?.response?.data?.message ||
+          'Error al guardar la disponibilidad horaria'
+      );
     }
   };
-
+/* Modal para Crear y Editar Doctor */
+if (isModalOpen){
+  return(
+    <div className="flex flex-col gap-6">
+        {/* Breadcrumb de navegación */}
+        <div className="flex items-center gap-2 text-sm text-med-text-muted">
+          <button
+            onClick={() => setIsModalOpen(false)}
+            className="hover:text-med-primary-900 transition"
+          >
+            Doctors
+          </button>
+          <span>›</span>
+          <span className="font-semibold text-med-primary-900">
+            {editingDoctor ? 'Editar Doctor' : 'Agregar Nuevo Doctor'}
+          </span>
+        </div>
+        {/* Tarjeta Principal de Registro */}
+        <Card className="p-6 sm:p-8 bg-white border border-med-border rounded-xl shadow-xs">
+          <div className="flex items-start gap-3 pb-6 border-b border-med-border">
+            <div className="p-2.5 rounded-lg bg-med-primary-50 text-med-primary-900">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-med-primary-900">
+                {editingDoctor ? 'Modificar Doctor' : 'Registrar Nuevo Doctor'}
+              </h2>
+              <p className="text-xs sm:text-sm text-med-text-sub mt-0.5">
+                Complete todos los campos obligatorios para integrar al nuevo facultativo al sistema del centro médico.
+              </p>
+            </div>
+          </div>
+          <form onSubmit={handleSubmit(onSubmitForm)} className="mt-6 flex flex-col gap-6">
+            {formError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600">
+                {formError}
+              </div>
+            )}
+            {/* Nombre Completo del Doctor */}
+            <div>
+              <label className="block text-xs font-bold text-med-text-main mb-2">
+                Nombre Completo del Doctor
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-med-text-muted">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Ej: Dr. Alejandro Martínez"
+                  {...register('name', {
+                    required: 'El nombre es obligatorio',
+                    minLength: { value: 3, message: 'Debe tener al menos 3 caracteres' },
+                    maxLength: { value: 100, message: 'No puede exceder 100 caracteres' },
+                  })}
+                  className="w-full pl-9 pr-3 py-2.5 text-xs bg-white border border-med-border rounded-lg text-med-text-main placeholder-med-text-muted focus:outline-none focus:ring-1 focus:ring-med-primary-600"
+                />
+              </div>
+              {errors.name && (
+                <p className="text-red-500 text-[11px] mt-1">{errors.name.message}</p>
+              )}
+            </div>
+            {/* Dos Columnas: Especialidad y Número de Licencia */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Especialidad */}
+              <div>
+                <label className="block text-xs font-bold text-med-text-main mb-2">
+                  Especialidad
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-med-text-muted pointer-events-none">
+                    <Stethoscope className="w-4 h-4 text-med-text-muted" />
+                  </span>
+                  <select
+                    {...register('specialityId', {
+                      required: 'Debe seleccionar una especialidad',
+                    })}
+                    className="w-full pl-9 pr-8 py-2.5 text-xs bg-white border border-med-border rounded-lg text-med-text-main focus:outline-none focus:ring-1 focus:ring-med-primary-600 appearance-none"
+                  >
+                    <option value="">Seleccione especialidad</option>
+                    {specialties.map((spec) => (
+                      <option key={spec.id} value={spec.id}>
+                        {spec.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-med-text-muted text-xs">
+                    ▼
+                  </span>
+                </div>
+                {errors.specialityId && (
+                  <p className="text-red-500 text-[11px] mt-1">{errors.specialityId.message}</p>
+                )}
+              </div>
+              {/* Número de Licencia Médica */}
+              <div>
+                <label className="block text-xs font-bold text-med-text-main mb-2">
+                  Número de Licencia Médica
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-med-text-muted">
+                    <IdCard className="w-4 h-4 text-med-text-muted" />
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="ID-45920-X"
+                    {...register('licenseNumber', {
+                      required: 'El número de licencia es obligatorio',
+                    })}
+                    className="w-full pl-9 pr-3 py-2.5 text-xs bg-white border border-med-border rounded-lg text-med-text-main placeholder-med-text-muted focus:outline-none focus:ring-1 focus:ring-med-primary-600"
+                  />
+                </div>
+                {errors.licenseNumber && (
+                  <p className="text-red-500 text-[11px] mt-1">{errors.licenseNumber.message}</p>
+                )}
+              </div>
+            </div>
+            {/* Botones Cancelar y Guardar Doctor */}
+            <div className="flex items-center justify-end gap-3 pt-6 border-t border-med-border">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsModalOpen(false)}
+                className="px-5 py-2 text-xs"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                className="px-5 py-2 text-xs bg-med-primary-900 hover:bg-med-primary-800 text-white flex items-center gap-2"
+              >
+                <span>
+                <Save className="w-3.5 h-3.5" />
+                </span>
+                <span>Guardar Doctor</span>
+              </Button>
+            </div>
+          </form>
+        </Card>
+      </div>
+  );
+}
+/* Modal para Disponibilidad Horaria */
+if (isAvailabilityModalOpen) {
+    return (
+      <div className="flex flex-col gap-6">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-sm text-med-text-muted">
+          <button
+            type="button"
+            onClick={() => setIsAvailabilityModalOpen(false)}
+            className="hover:text-med-primary-900 transition cursor-pointer"
+          >
+            Doctores
+          </button>
+          <span>›</span>
+          <span className="font-semibold text-med-primary-900">
+            Disponibilidad Horaria
+          </span>
+        </div>
+        {/* Encabezado */}
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-med-text-main">
+            Gestionar Disponibilidad Horaria
+          </h1>
+          <p className="text-sm text-med-text-sub mt-1">
+            Defina los días y rangos horarios de atención para el profesional seleccionado.
+          </p>
+        </div>
+        {/* Mensajes de Alerta */}
+        {availabilityError && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600">
+            {availabilityError}
+          </div>
+        )}
+        {availabilitySuccess && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-700 font-medium">
+            {availabilitySuccess}
+          </div>
+        )}
+        {/* Contenido en dos columnas*/}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* Columna Izquierda: Seleccion de Profesional y Previsualización */}
+          <div className="lg:col-span-4 flex flex-col gap-6">
+            <Card className="p-6 bg-white border border-med-border rounded-xl shadow-xs flex flex-col gap-5">
+              <div>
+                <label className="block text-xs font-bold text-med-text-main mb-2">
+                  Seleccionar Profesional
+                </label>
+                <select
+                  value={selectedDoctorId}
+                  onChange={(e) => setSelectedDoctorId(e.target.value)}
+                  className="w-full px-3 py-2.5 text-xs bg-white border border-med-border rounded-lg text-med-text-main focus:outline-none focus:ring-1 focus:ring-med-primary-600"
+                >
+                  <option value="">Seleccione un doctor...</option>
+                  {doctors.map((doc) => (
+                    <option key={doc.id} value={doc.id}>
+                      {doc.name} - {doc.speciality?.name || 'S/E'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {/* Tarjeta de previsualización del doctor */}
+              {selectedDoctorObj && (
+                <div className="p-4 bg-med-primary-50/70 border border-med-primary-100 rounded-xl flex items-center gap-4">
+                  <img
+                    src="/doctor-avatar.jpg"
+                    alt={selectedDoctorObj.name}
+                    className="w-12 h-12 rounded-xl object-cover border border-med-primary-200 shadow-xs"/>
+                  <div>
+                    <h4 className="font-bold text-med-primary-900 text-sm">
+                      {selectedDoctorObj.name}
+                    </h4>
+                    <p className="text-[11px] text-med-text-muted mt-0.5">
+                      ID: {selectedDoctorObj.licenseNumber || 'S/D'}
+                    </p>
+                    <p className="text-[11px] font-semibold text-med-primary-700">
+                      {selectedDoctorObj.speciality?.name || 'General'}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </Card>
+            {/* Aviso informativo inferior */}
+            <div className="p-4 bg-white border border-med-border rounded-xl shadow-xs flex items-start gap-3">
+              <span className="text-med-primary-700 text-base mt-0.5">
+                <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              </span>
+              <p className="text-xs text-med-text-sub leading-relaxed">
+                Los cambios realizados se aplicarán a partir de la próxima semana calendario. Las citas ya programadas no se verán afectadas automáticamente.
+              </p>
+            </div>
+          </div>
+          {/* Columna Derecha: Configuración de Horarios por Día */}
+          <div className="lg:col-span-8">
+            <Card className="p-0 overflow-hidden bg-white border border-med-border rounded-xl shadow-xs">
+              <div className="p-5 border-b border-med-border flex items-center justify-between">
+                <h3 className="font-bold text-med-primary-900 text-sm">
+                  Configuración de Horarios
+                </h3>
+                <span className="text-[11px] text-med-text-muted flex items-center gap-1">
+                  <Timer className="w-4 h-4 text-med-text-muted" /> Intervalos automáticos de 30 minutos
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-med-primary-50/70 text-[11px] uppercase tracking-wider text-med-text-sub border-b border-med-border">
+                    <tr>
+                      <th className="px-6 py-3.5">Día</th>
+                      <th className="px-6 py-3.5 text-center">Estado</th>
+                      <th className="px-6 py-3.5">Entrada</th>
+                      <th className="px-6 py-3.5">Salida</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-med-border-subtle">
+                    {weeklySchedule.map((item, index) => (
+                      <tr
+                        key={item.day}
+                        className={item.active ? 'hover:bg-gray-50/70' : 'bg-gray-50/40 text-med-text-muted'}
+                      >
+                        {/* Nombre del Día */}
+                        <td className="px-6 py-4 font-semibold text-med-primary-900">
+                          {item.day}
+                        </td>
+                        {/* Switch Activo / Inactivo */}
+                        <td className="px-6 py-4 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleDay(index)}
+                            className="inline-flex items-center gap-2 cursor-pointer"
+                          >
+                            <span
+                              className={`w-9 h-5 flex items-center rounded-full p-1 transition-colors duration-200 ease-in-out ${
+                                item.active ? 'bg-med-primary-900' : 'bg-gray-300'
+                              }`}
+                            >
+                              <span
+                                className={`bg-white w-3.5 h-3.5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                                  item.active ? 'translate-x-4' : 'translate-x-0'
+                                }`}
+                              />
+                            </span>
+                            <span className="text-xs font-medium">
+                              {item.active ? 'Activo' : 'Inactivo'}
+                            </span>
+                          </button>
+                        </td>
+                        {/* Hora Entrada */}
+                        <td className="px-6 py-4">
+                          {item.active ? (
+                            <input
+                              type="time"
+                              value={item.startTime}
+                              onChange={(e) =>
+                                handleTimeChange(index, 'startTime', e.target.value)
+                              }
+                              className="px-2.5 py-1.5 border border-med-border rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-med-primary-600"
+                            />
+                          ) : (
+                            <span className="text-med-text-muted font-mono">--:--</span>
+                          )}
+                        </td>
+                        {/* Hora Salida */}
+                        <td className="px-6 py-4">
+                          {item.active ? (
+                            <input
+                              type="time"
+                              value={item.endTime}
+                              onChange={(e) =>
+                                handleTimeChange(index, 'endTime', e.target.value)
+                              }
+                              className="px-2.5 py-1.5 border border-med-border rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-med-primary-600"
+                            />
+                          ) : (
+                            <span className="text-med-text-muted font-mono">--:--</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* Botones Cancelar y Guardar */}
+              <div className="p-5 border-t border-med-border flex items-center justify-end gap-3 bg-white">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAvailabilityModalOpen(false)}
+                  className="px-5 py-2 text-xs"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSaveAvailability}
+                  className="px-5 py-2 text-xs bg-med-primary-900 hover:bg-med-primary-800 text-white flex items-center gap-2"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Guardar Disponibilidad</span>
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col gap-6">
       {/* Título y Acciones de Cabecera */}
@@ -439,262 +872,6 @@ function DoctorsPage() {
           />
         </div>
       </Card>
-
-      {/* Modal para Crear y Editar Doctor */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border border-med-border">
-            <div className="p-5 border-b border-med-border flex justify-between items-center">
-              <h3 className="font-bold text-med-primary-900 text-lg">
-                {editingDoctor ? 'Editar Doctor' : 'Nuevo Doctor'}
-              </h3>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-med-text-muted hover:text-med-text-main text-xl font-semibold"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form
-              onSubmit={handleSubmit(onSubmitForm)}
-              className="p-5 flex flex-col gap-4"
-            >
-              {formError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600">
-                  {formError}
-                </div>
-              )}
-
-              {/* Nombre */}
-              <div>
-                <label className="block text-xs font-semibold text-med-text-main mb-1">
-                  Nombre Completo
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej: Dr. Juan Pérez"
-                  {...register('name', {
-                    required: 'El nombre es obligatorio',
-                    minLength: {
-                      value: 3,
-                      message: 'Debe tener al menos 3 caracteres',
-                    },
-                    maxLength: {
-                      value: 100,
-                      message: 'No puede exceder 100 caracteres',
-                    },
-                  })}
-                  className="w-full px-3 py-2 text-xs border border-med-border rounded-lg focus:outline-none focus:ring-1 focus:ring-med-primary-600"
-                />
-                {errors.name && (
-                  <p className="text-red-500 text-[11px] mt-1">
-                    {errors.name.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Matrícula */}
-              <div>
-                <label className="block text-xs font-semibold text-med-text-main mb-1">
-                  Matrícula Profesional
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej: MP-12345"
-                  {...register('licenseNumber', {
-                    required: 'La matrícula es obligatoria',
-                  })}
-                  className="w-full px-3 py-2 text-xs border border-med-border rounded-lg focus:outline-none focus:ring-1 focus:ring-med-primary-600"
-                />
-                {errors.licenseNumber && (
-                  <p className="text-red-500 text-[11px] mt-1">
-                    {errors.licenseNumber.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Especialidad */}
-              <div>
-                <label className="block text-xs font-semibold text-med-text-main mb-1">
-                  Especialidad
-                </label>
-                <select
-                  {...register('specialityId', {
-                    required: 'Debe seleccionar una especialidad',
-                  })}
-                  className="w-full px-3 py-2 text-xs border border-med-border rounded-lg focus:outline-none focus:ring-1 focus:ring-med-primary-600 bg-white"
-                >
-                  <option value="">Seleccione una especialidad...</option>
-                  {specialties.map((spec) => (
-                    <option key={spec.id} value={spec.id}>
-                      {spec.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.specialityId && (
-                  <p className="text-red-500 text-[11px] mt-1">
-                    {errors.specialityId.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Botones del Modal */}
-              <div className="flex justify-end gap-2 pt-3 border-t border-med-border mt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-med-primary-900 hover:bg-med-primary-800 text-white"
-                >
-                  {editingDoctor ? 'Actualizar' : 'Crear'}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-      {/* Modal para Disponibilidad Horaria */}
-      {isAvailabilityModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border border-med-border">
-            <div className="p-5 border-b border-med-border flex justify-between items-center">
-              <h3 className="font-bold text-med-primary-900 text-lg">
-                Asignar Disponibilidad Horaria
-              </h3>
-              <button
-                onClick={() => setIsAvailabilityModalOpen(false)}
-                className="text-med-text-muted hover:text-med-text-main text-xl font-semibold"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form
-              onSubmit={handleSubmitAvail(onSubmitAvailability)}
-              className="p-5 flex flex-col gap-4"
-            >
-              {availabilityError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600">
-                  {availabilityError}
-                </div>
-              )}
-
-              {availabilitySuccess && (
-                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-700 font-medium">
-                  {availabilitySuccess}
-                </div>
-              )}
-
-              {/* Selector de Doctor */}
-              <div>
-                <label className="block text-xs font-semibold text-med-text-main mb-1">
-                  Doctor / Profesional
-                </label>
-                <select
-                  {...registerAvail('doctorId', {
-                    required: 'Debe seleccionar un médico',
-                  })}
-                  className="w-full px-3 py-2 text-xs border border-med-border rounded-lg focus:outline-none focus:ring-1 focus:ring-med-primary-600 bg-white"
-                >
-                  <option value="">Seleccione un doctor...</option>
-                  {doctors.map((doc) => (
-                    <option key={doc.id} value={doc.id}>
-                      {doc.name} - {doc.speciality?.name || 'S/E'}
-                    </option>
-                  ))}
-                </select>
-                {errorsAvail.doctorId && (
-                  <p className="text-red-500 text-[11px] mt-1">
-                    {errorsAvail.doctorId.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Selector de Día */}
-              <div>
-                <label className="block text-xs font-semibold text-med-text-main mb-1">
-                  Día de la semana
-                </label>
-                <select
-                  {...registerAvail('day', {
-                    required: 'El día es obligatorio',
-                  })}
-                  className="w-full px-3 py-2 text-xs border border-med-border rounded-lg focus:outline-none focus:ring-1 focus:ring-med-primary-600 bg-white"
-                >
-                  <option value="Lunes">Lunes</option>
-                  <option value="Martes">Martes</option>
-                  <option value="Miercoles">Miércoles</option>
-                  <option value="Jueves">Jueves</option>
-                  <option value="Viernes">Viernes</option>
-                  <option value="Sabado">Sábado</option>
-                </select>
-              </div>
-
-              {/* Rango de Horarios */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-med-text-main mb-1">
-                    Hora Inicio
-                  </label>
-                  <input
-                    type="time"
-                    {...registerAvail('startTime', {
-                      required: 'Requerido',
-                    })}
-                    className="w-full px-3 py-2 text-xs border border-med-border rounded-lg focus:outline-none focus:ring-1 focus:ring-med-primary-600"
-                  />
-                  {errorsAvail.startTime && (
-                    <p className="text-red-500 text-[11px] mt-1">
-                      {errorsAvail.startTime.message}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-med-text-main mb-1">
-                    Hora Fin
-                  </label>
-                  <input
-                    type="time"
-                    {...registerAvail('endTime', {
-                      required: 'Requerido',
-                    })}
-                    className="w-full px-3 py-2 text-xs border border-med-border rounded-lg focus:outline-none focus:ring-1 focus:ring-med-primary-600"
-                  />
-                  {errorsAvail.endTime && (
-                    <p className="text-red-500 text-[11px] mt-1">
-                      {errorsAvail.endTime.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Botones */}
-              <div className="flex justify-end gap-2 pt-3 border-t border-med-border mt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsAvailabilityModalOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-med-primary-900 hover:bg-med-primary-800 text-white"
-                >
-                  Guardar Horario
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
