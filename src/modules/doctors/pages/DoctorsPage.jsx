@@ -431,9 +431,10 @@ function DoctorsPage() {
         {/* Paginador normalizado idéntico a Búsqueda y Filtrado de Citas */}
         <div className="p-4 bg-med-primary-50/50 border-t border-med-border">
           <TablePagination
-            page={pageIndex}
+            currentPage={pageIndex}
             totalPages={totalPages}
-            totalCount={totalCount}
+            totalItems={totalCount}
+            pageSize={pageSize}
             onPageChange={(newPage) => setPageIndex(newPage)}
           />
         </div>

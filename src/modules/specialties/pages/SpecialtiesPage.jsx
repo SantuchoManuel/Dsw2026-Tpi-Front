@@ -207,7 +207,6 @@ function SpecialtiesPage() {
               <tr className="bg-med-primary-50/50 text-med-text-muted border-b border-med-border font-medium">
                 <th className="px-6 py-3.5">Nombre de la Especialidad</th>
                 <th className="px-6 py-3.5">Descripción</th>
-                <th className="px-6 py-3.5 text-center">Estado</th>
                 <th className="px-6 py-3.5 text-right">Acciones</th>
               </tr>
             </thead>
@@ -262,14 +261,7 @@ function SpecialtiesPage() {
                     <td className="px-6 py-4 text-med-text-sub max-w-md">
                       {spec.description}
                     </td>
-
-                    {/* Estado */}
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-med-active-bg text-med-active-text">
-                        Activo
-                      </span>
-                    </td>
-
+                    
                     {/* Acciones */}
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 text-med-text-muted">
