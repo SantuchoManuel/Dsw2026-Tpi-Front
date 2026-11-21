@@ -85,7 +85,7 @@ function AppointmentsPage() {
           </p>
         ) : (
           appointments.map((appt) => {
-            const fechaObj = new Date(appt.fecha);
+            const fechaObj = new Date(appt.Date);
             return (
               <Card
                 key={appt.id}

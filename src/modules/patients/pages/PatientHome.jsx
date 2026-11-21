@@ -121,8 +121,8 @@ function PatientHome() {
 
   const parseSlotDate = (slot) => {
     if (!slot) return null;
-    if (slot.fecha) return new Date(slot.fecha);
-    const dateStr = slot.date || slot.fecha;
+    if (slot.date) return new Date(slot.date);
+      const dateStr = slot.date;
     const timeStr = slot.startTime || slot.horaDeInicio || '00:00';
     if (!dateStr) return null;
     return new Date(`${dateStr}T${timeStr.length === 5 ? timeStr + ':00' : timeStr}`);
@@ -429,11 +429,11 @@ function PatientHome() {
               <strong className="text-med-text-main">{confirmedData.doctorName}</strong>{' '}
               fue reservado para el{' '}
               <strong className="text-med-text-main">
-                {new Date(confirmedData.fecha).toLocaleDateString('es-AR', {
+                {new Date(confirmedData.date).toLocaleDateString('es-AR', {
                   weekday: 'long', day: '2-digit', month: 'long'
                 })}{' '}
                 a las{' '}
-                {new Date(confirmedData.fecha).toLocaleTimeString('es-AR', {
+                {new Date(confirmedData.date).toLocaleTimeString('es-AR', {
                   hour: '2-digit', minute: '2-digit'
                 })} hs
               </strong>.
