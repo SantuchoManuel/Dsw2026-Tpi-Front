@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Heart, Lightbulb, FlaskConical, Smile, Stethoscope, Pencil, Trash2, Save, } from 'lucide-react';
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
 import TablePagination from '../../shared/components/TablePagination';
@@ -128,7 +129,155 @@ function SpecialtiesPage() {
   };
 
   const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  
+  //este es para asignarle a un icono a cada especialidad distinta
+  const getSpecialtyIcon = (name = '') => {
+    const lower = name.toLowerCase();
+    if (lower.includes('cardio') || lower.includes('coraz')) {
+      return <Heart className="w-4 h-4" />;
+    }
+    if (lower.includes('neuro') || lower.includes('cerebr')) {
+      return <Lightbulb className="w-4 h-4" />;
+    }
+    if (lower.includes('derma') || lower.includes('piel')) {
+      return <FlaskConical className="w-4 h-4" />;
+    }
+    if (lower.includes('pedia') || lower.includes('niñ')) {
+      return <Smile className="w-4 h-4" />;
+    }
+    return <Stethoscope className="w-4 h-4" />;
+  };
 
+  /* Modal para Crear / Editar Especialidad */
+  if (isModalOpen) {
+    return (
+      <div className="flex flex-col gap-6">
+        {/* Breadcrumb de navegación */}
+        <div className="flex items-center gap-2 text-sm text-med-text-muted">
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(false)}
+            className="hover:text-med-primary-900 transition cursor-pointer"
+          >
+            Especialidades
+          </button>
+          <span>›</span>
+          <span className="font-semibold text-med-primary-900">
+            {editingSpecialty ? 'Modificar Especialidad' : 'Agregar Nueva Especialidad'}
+          </span>
+        </div>
+
+        {/* Encabezado */}
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-med-text-main">
+            {editingSpecialty ? 'Modificar Especialidad' : 'Registrar Nueva Especialidad'}
+          </h1>
+          <p className="text-sm text-med-text-sub mt-1">
+            Complete la información técnica y administrativa para dar de alta una especialidad médica en el sistema hospitalario.
+          </p>
+        </div>
+
+        {/* Tarjeta del Formulario */}
+        <Card className="p-6 sm:p-8 bg-white border border-med-border rounded-xl shadow-xs">
+          <form onSubmit={handleSubmit(onSaveSpecialty)} className="flex flex-col gap-6">
+            {modalError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600">
+                {modalError}
+              </div>
+            )}
+
+            {/* Nombre de la Especialidad */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-med-text-main">
+                Nombre de la Especialidad
+              </label>
+              <input
+                type="text"
+                placeholder="Ej. Cardiología Intervencionista"
+                className={`w-full border rounded-lg px-3.5 py-2.5 text-xs bg-white text-med-text-main focus:outline-none focus:ring-1 focus:ring-med-primary-600 ${
+                  errors.name ? 'border-red-400 bg-red-50/20' : 'border-med-border'
+                }`}
+                {...register('name', {
+                  required: 'El nombre es obligatorio',
+                  minLength: { value: 3, message: 'Debe tener al menos 3 caracteres' },
+                  maxLength: { value: 100, message: 'No debe superar los 100 caracteres' },
+                })}
+              />
+              {errors.name && (
+                <p className="text-xs text-red-500 font-medium">
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
+
+            {/* Descripcion */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-med-text-main">
+                Descripción
+              </label>
+              <textarea
+                rows="4"
+                placeholder="Detalle el alcance de la especialidad, procedimientos principales y requisitos de derivación..."
+                className={`w-full border rounded-lg px-3.5 py-2.5 text-xs bg-white text-med-text-main focus:outline-none focus:ring-1 focus:ring-med-primary-600 ${
+                  errors.description ? 'border-red-400 bg-red-50/20' : 'border-med-border'
+                }`}
+                {...register('description', {
+                  required: 'La descripción es obligatoria',
+                  minLength: { value: 10, message: 'Debe tener al menos 10 caracteres' },
+                  maxLength: { value: 250, message: 'No debe superar los 250 caracteres' },
+                })}
+              />
+              {errors.description && (
+                <p className="text-xs text-red-500 font-medium">
+                  {errors.description.message}
+                </p>
+              )}
+            </div>
+
+            {/* Estado Inicial */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-med-text-main">
+                Estado inicial
+              </label>
+              <div className="relative">
+                <select
+                  disabled
+                  defaultValue="activo"
+                  className="w-full border border-med-border rounded-lg px-3.5 py-2.5 text-xs bg-gray-50 text-med-text-main appearance-none cursor-not-allowed"
+                >
+                  <option value="activo">Activo - Disponible para programación</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-med-text-muted">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Botones de Accion */}
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-med-border">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsModalOpen(false)}
+                className="px-5 py-2 text-xs"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                className="px-5 py-2 text-xs bg-med-primary-900 hover:bg-med-primary-800 text-white flex items-center gap-2"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>{editingSpecialty ? 'Guardar Cambios' : 'Guardar Especialidad'}</span>
+              </Button>
+            </div>
+          </form>
+        </Card>
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col gap-6">
       {/* Cabecera con Título, Buscador y Botón */}
@@ -166,7 +315,7 @@ function SpecialtiesPage() {
             </span>
             <input
               type="text"
-              placeholder="Buscar y presionar enter..."
+              placeholder="Buscar especialidad..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-med-border rounded-lg text-med-text-main placeholder-med-text-muted focus:outline-none focus:ring-1 focus:ring-med-primary-600"
@@ -192,13 +341,10 @@ function SpecialtiesPage() {
 
       {/* Tabla Principal de Especialidades */}
       <Card className="p-0 overflow-hidden border-med-border">
-        <div className="p-5 border-b border-med-border flex items-center justify-between">
+        <div className="p-5 border-b border-med-border">
           <h2 className="text-base font-bold text-med-primary-900">
             Registros de Especialidades
           </h2>
-          <span className="text-xs text-med-text-muted">
-            Total: {totalItems}
-          </span>
         </div>
 
         <div className="overflow-x-auto">
@@ -231,27 +377,15 @@ function SpecialtiesPage() {
                 </tr>
               ) : (
                 specialties.map((spec) => (
-                  <tr
+                                    <tr
                     key={spec.id}
                     className="hover:bg-med-hover-row transition duration-150"
                   >
-                    {/* Nombre con icono */}
+                    {/* Nombre con icono según especialidad */}
                     <td className="px-6 py-4 font-semibold text-med-primary-900">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-med-primary-50 flex items-center justify-center text-med-primary-900 shrink-0">
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="1.75"
-                              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                            />
-                          </svg>
+                          {getSpecialtyIcon(spec.name)}
                         </div>
                         <span>{spec.name}</span>
                       </div>
@@ -261,48 +395,26 @@ function SpecialtiesPage() {
                     <td className="px-6 py-4 text-med-text-sub max-w-md">
                       {spec.description}
                     </td>
-                    
-                    {/* Acciones */}
+
+                    {/* Acciones con Pencil y Trash2 de Lucide */}
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 text-med-text-muted">
                         <button
+                          type="button"
                           title="Editar especialidad"
-                          className="p-1.5 rounded-lg hover:bg-med-primary-50 text-med-text-muted hover:text-med-primary-900 transition"
+                          className="p-1.5 rounded-lg hover:bg-med-primary-50 text-med-text-muted hover:text-med-primary-900 transition cursor-pointer"
                           onClick={() => handleOpenEditModal(spec)}
                         >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                            />
-                          </svg>
+                          <Pencil className="w-4 h-4" />
                         </button>
 
                         <button
+                          type="button"
                           title="Eliminar especialidad"
-                          className="p-1.5 rounded-lg hover:bg-red-50 text-med-text-muted hover:text-med-danger-text transition"
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-med-text-muted hover:text-red-500 transition cursor-pointer"
                           onClick={() => handleDelete(spec.id, spec.name)}
                         >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
+                          <Trash2 className="w-4 h-4 text-red-500" />
                         </button>
                       </div>
                     </td>
@@ -322,116 +434,6 @@ function SpecialtiesPage() {
           onPageChange={(newPage) => setPageIndex(newPage)}
         />
       </Card>
-
-      {/* Modal para Crear / Editar Especialidad */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-med-border">
-            <div className="p-6 border-b border-med-border flex items-center justify-between">
-              <h3 className="text-lg font-bold text-med-primary-900">
-                {editingSpecialty
-                  ? 'Editar Especialidad'
-                  : 'Registrar Nueva Especialidad'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="text-med-text-muted hover:text-med-text-main text-xl leading-none"
-              >
-                &times;
-              </button>
-            </div>
-
-            <form
-              onSubmit={handleSubmit(onSaveSpecialty)}
-              className="p-6 flex flex-col gap-4"
-            >
-              {modalError && (
-                <div className="p-2.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg">
-                  {modalError}
-                </div>
-              )}
-
-              {/* Nombre */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-med-text-main">
-                  Nombre de la Especialidad
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej. Cardiología"
-                  className={`w-full border rounded-lg px-3.5 py-2 text-sm bg-white text-med-text-main focus:outline-none focus:ring-2 focus:ring-med-primary-600 ${
-                    errors.name
-                      ? 'border-red-400 bg-red-50/20'
-                      : 'border-med-border'
-                  }`}
-                  {...register('name', {
-                    required: 'El nombre es obligatorio',
-                    minLength: {
-                      value: 3,
-                      message: 'Debe tener al menos 3 caracteres',
-                    },
-                    maxLength: {
-                      value: 100,
-                      message: 'No debe superar los 100 caracteres',
-                    },
-                  })}
-                />
-                {errors.name && (
-                  <p className="text-xs text-red-500 font-medium">
-                    {errors.name.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Descripción */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-med-text-main">
-                  Descripción
-                </label>
-                <textarea
-                  rows="3"
-                  placeholder="Detalle o descripción de la especialidad..."
-                  className={`w-full border rounded-lg px-3.5 py-2 text-sm bg-white text-med-text-main focus:outline-none focus:ring-2 focus:ring-med-primary-600 ${
-                    errors.description
-                      ? 'border-red-400 bg-red-50/20'
-                      : 'border-med-border'
-                  }`}
-                  {...register('description', {
-                    required: 'La descripción es obligatoria',
-                    minLength: {
-                      value: 10,
-                      message: 'Debe tener al menos 10 caracteres',
-                    },
-                    maxLength: {
-                      value: 100,
-                      message: 'No debe superar los 100 caracteres',
-                    },
-                  })}
-                />
-                {errors.description && (
-                  <p className="text-xs text-red-500 font-medium">
-                    {errors.description.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-med-border">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-med-text-sub hover:bg-gray-100 rounded-lg transition"
-                >
-                  Cancelar
-                </button>
-                <Button type="submit">
-                  {editingSpecialty ? 'Guardar Cambios' : 'Crear Especialidad'}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
