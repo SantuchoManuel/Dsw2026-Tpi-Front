@@ -24,6 +24,13 @@ export const getDoctorAvailabilities = async (doctorId) => {
   return response.data;
 };
 
+//para obtener los turnos de un doctor por su ID
+export const getDoctorSlots = async (doctorId) => {
+  const response = await instance.get(`api/doctors/${doctorId}/slots`);
+
+  return response.data;
+};
+
 //registrar un nuevo doctor
 export const createDoctor = async (data) => {
   const response = await instance.post('api/doctors', data);
