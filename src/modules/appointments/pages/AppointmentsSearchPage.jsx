@@ -1,93 +1,108 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
+import TablePagination from '../../shared/components/TablePagination';
+import { getSpecialties } from '../../specialties/services/specialtiesService';
+import { getDoctors } from '../../doctors/services/doctorsService';
+import { instance } from '../../shared/api/axiosInstance';
 
 function AppointmentsSearchPage() {
-  const [patientQuery, setPatientQuery] = useState('Johnathan Doe');
-  const [specialtyFilter, setSpecialtyFilter] = useState('Todas');
-  const [doctorFilter, setDoctorFilter] = useState('Todos');
-  const [dateFilter, setDateFilter] = useState('2023-10-24');
-
-  const appointmentsData = [
-    {
-      id: 1,
-      date: '24 Oct, 2023',
-      time: '10:30 AM',
-      department: 'Cardiology',
-      doctor: 'Dr. Robert Smith',
-      patient: 'Johnathan Doe',
-      dni: '40.123.456',
-      status: 'CONFIRMADO',
-      statusType: 'confirmed',
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="1.75"
-            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: 2,
-      date: '15 Oct, 2023',
-      time: '09:15 AM',
-      department: 'Neurology',
-      doctor: 'Dra. Garcia',
-      patient: 'Johnathan Doe',
-      dni: '40.123.456',
-      status: 'COMPLETADO',
-      statusType: 'completed',
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="1.75"
-            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: 3,
-      date: '05 Oct, 2023',
-      time: '11:00 AM',
-      department: 'General Checkup',
-      doctor: 'Dr. Miller',
-      patient: 'Johnathan Doe',
-      dni: '40.123.456',
-      status: 'CANCELADO',
-      statusType: 'cancelled',
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="1.75"
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-      ),
-    },
-  ];
+  const [dniQuery, setDniQuery] = useState('');
+  const [specialtyId, setSpecialtyId] = useState('');
+  const [doctorId, setDoctorId] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+  // --- Datos del back ---
+  const [specialties, setSpecialties] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [pageIndex, setPageIndex] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 10;
+  // --- UI ---
+  const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [activeChips, setActiveChips] = useState([]);
+  // --- Cargar especialidades y doctores para los selects ---
+  useEffect(() => {
+    const fetchFilters = async () => {
+      try {
+        const [specData, docData] = await Promise.all([
+          getSpecialties({ pageSize: 100, pageIndex: 1 }),
+          getDoctors({ pageSize: 100, pageIndex: 1 }),
+        ]);
+        setSpecialties(specData.data || []);
+        setDoctors(docData.data || []);
+      } catch (err) {
+        console.error('Error cargando filtros:', err);
+      }
+    };
+    fetchFilters();
+  }, []);
+  // --- Buscar citas ---
+  const fetchAppointments = async (page = 1) => {
+    try {
+      setLoading(true);
+      const params = { pageSize, pageIndex: page };
+      if (dniQuery.trim()) params.dni = Number(dniQuery.trim());
+      if (specialtyId) params.specialtyId = specialtyId;
+      if (doctorId) params.doctorId = doctorId;
+      if (dateFilter) params.date = dateFilter;
+      const response = await instance.get('api/appointments/search', { params });
+      const data = response.data;
+      setAppointments(data.data || []);
+      setTotalItems(data.total || 0);
+      setTotalPages(Math.ceil((data.total || 0) / pageSize) || 1);
+      setPageIndex(page);
+      setHasSearched(true);
+      // Chips activos
+      const chips = [];
+      if (dniQuery.trim()) chips.push(`DNI: ${dniQuery.trim()}`);
+      if (specialtyId) {
+        const sp = specialties.find((s) => s.id === specialtyId);
+        if (sp) chips.push(`Especialidad: ${sp.name}`);
+      }
+      if (doctorId) {
+        const doc = doctors.find((d) => d.id === doctorId);
+        if (doc) chips.push(`Doctor: ${doc.name}`);
+      }
+      if (dateFilter) chips.push(`Fecha: ${new Date(dateFilter + 'T00:00:00').toLocaleDateString('es-AR')}`);
+      setActiveChips(chips);
+    } catch (err) {
+      console.error('Error buscando citas:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleApplyFilters = () => {
+    fetchAppointments(1);
+  };
+  const handlePageChange = (newPage) => {
+    fetchAppointments(newPage);
+  };
+  const getStatusBadge = (status) => {
+    const s = status?.toLowerCase();
+    if (s === 'confirmada')
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-med-active-bg text-med-active-text">
+          <span className="w-1.5 h-1.5 rounded-full bg-med-active-text" />
+          CONFIRMADO
+        </span>
+      );
+    if (s === 'cancelada')
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-med-danger-bg text-med-danger-text">
+          <span className="w-1.5 h-1.5 rounded-full bg-med-danger-text" />
+          CANCELADO
+        </span>
+      );
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+        <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+        {status?.toUpperCase() || 'S/D'}
+      </span>
+    );
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -127,76 +142,57 @@ function AppointmentsSearchPage() {
 
         {/* Inputs de Filtros */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 mt-4 items-end">
-          {/* Nombre o DNI */}
+          {/* DNI del Paciente */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-med-text-sub">
               Nombre o DNI del Paciente
             </label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-med-text-muted">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </span>
               <input
-                type="text"
-                value={patientQuery}
-                onChange={(e) => setPatientQuery(e.target.value)}
-                placeholder="Nombre o DNI..."
+                type="number"
+                value={dniQuery}
+                onChange={(e) => setDniQuery(e.target.value)}
+                placeholder="Ej: 12345678"
                 className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-med-border rounded-lg text-med-text-main placeholder-med-text-muted focus:outline-none focus:ring-1 focus:ring-med-primary-600"
               />
             </div>
           </div>
-
           {/* Especialidad */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-med-text-sub">
-              Especialidad
-            </label>
+            <label className="text-xs font-semibold text-med-text-sub">Especialidad</label>
             <select
-              value={specialtyFilter}
-              onChange={(e) => setSpecialtyFilter(e.target.value)}
+              value={specialtyId}
+              onChange={(e) => setSpecialtyId(e.target.value)}
               className="w-full px-3 py-2 text-xs bg-white border border-med-border rounded-lg text-med-text-main focus:outline-none focus:ring-1 focus:ring-med-primary-600"
             >
-              <option value="Todas">Todas las Especialidades</option>
-              <option value="Cardiology">Cardiology</option>
-              <option value="Neurology">Neurology</option>
-              <option value="General Checkup">General Checkup</option>
+              <option value="">Todas las Especialidades</option>
+              {specialties.map((sp) => (
+                <option key={sp.id} value={sp.id}>{sp.name}</option>
+              ))}
             </select>
           </div>
-
           {/* Doctor */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-med-text-sub">
-              Doctor
-            </label>
+            <label className="text-xs font-semibold text-med-text-sub">Doctor</label>
             <select
-              value={doctorFilter}
-              onChange={(e) => setDoctorFilter(e.target.value)}
+              value={doctorId}
+              onChange={(e) => setDoctorId(e.target.value)}
               className="w-full px-3 py-2 text-xs bg-white border border-med-border rounded-lg text-med-text-main focus:outline-none focus:ring-1 focus:ring-med-primary-600"
             >
-              <option value="Todos">Todos los Doctores</option>
-              <option value="Dr. Robert Smith">Dr. Robert Smith</option>
-              <option value="Dra. Garcia">Dra. Garcia</option>
-              <option value="Dr. Miller">Dr. Miller</option>
+              <option value="">Todos los Doctores</option>
+              {doctors.map((doc) => (
+                <option key={doc.id} value={doc.id}>{doc.name}</option>
+              ))}
             </select>
           </div>
-
           {/* Fecha */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-med-text-sub">
-              Fecha
-            </label>
+            <label className="text-xs font-semibold text-med-text-sub">Fecha</label>
             <input
               type="date"
               value={dateFilter}
@@ -204,25 +200,14 @@ function AppointmentsSearchPage() {
               className="w-full px-3 py-2 text-xs bg-white border border-med-border rounded-lg text-med-text-main focus:outline-none focus:ring-1 focus:ring-med-primary-600"
             />
           </div>
-
-          {/* Botón Aplicar Filtros */}
+          {/* Botón */}
           <div>
             <Button
-              onClick={() => alert('Filtros aplicados')}
+              onClick={handleApplyFilters}
               className="w-full flex items-center justify-center gap-2 bg-med-primary-900 hover:bg-med-primary-800 text-white font-medium py-2 rounded-lg"
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                />
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
               <span>Aplicar Filtros</span>
             </Button>
@@ -230,17 +215,18 @@ function AppointmentsSearchPage() {
         </div>
 
         {/* Chips de Filtros Activos */}
-        <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-med-border-subtle">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-sky-100/70 text-sky-800">
-            Paciente: Johnathan Doe
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-sky-100/70 text-sky-800">
-            DNI: 40.123.456
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-            Filtro Activo: Próximos 7 Días
-          </span>
-        </div>
+        {activeChips.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-med-border-subtle">
+            {activeChips.map((chip, i) => (
+              <span
+                key={i}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-sky-100/70 text-sky-800"
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
+        )}
       </Card>
 
       {/* Card Inferior: Registros de Citas */}
@@ -264,99 +250,87 @@ function AppointmentsSearchPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-med-border-subtle">
-              {appointmentsData.map((item) => (
-                <tr
-                  key={item.id}
-                  className="hover:bg-gray-50/70 transition-colors"
-                >
-                  {/* Fecha y Hora */}
-                  <td className="px-6 py-4">
-                    <p className="font-bold text-med-primary-900 text-sm">
-                      {item.date}
-                    </p>
-                    <p className="text-xs text-med-text-muted mt-0.5">
-                      {item.time}
-                    </p>
-                  </td>
-
-                  {/* Departamento / Especialidad con Icono */}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-med-primary-100 text-med-primary-700 flex items-center justify-center shrink-0">
-                        {item.icon}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-med-primary-900">
-                          {item.department}
-                        </p>
-                        <p className="text-xs text-med-text-muted">
-                          {item.doctor}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Paciente y DNI */}
-                  <td className="px-6 py-4">
-                    <p className="font-semibold text-med-text-main">
-                      {item.patient}
-                    </p>
-                    <p className="text-xs text-med-text-muted mt-0.5">
-                      DNI: {item.dni}
-                    </p>
-                  </td>
-
-                  {/* Estado (CONFIRMADO, COMPLETADO, CANCELADO) */}
-                  <td className="px-6 py-4 text-center">
-                    {item.statusType === 'confirmed' && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-med-active-bg text-med-active-text">
-                        <span className="w-1.5 h-1.5 rounded-full bg-med-active-text" />
-                        {item.status}
-                      </span>
-                    )}
-                    {item.statusType === 'completed' && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
-                        {item.status}
-                      </span>
-                    )}
-                    {item.statusType === 'cancelled' && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-med-danger-bg text-med-danger-text">
-                        <span className="w-1.5 h-1.5 rounded-full bg-med-danger-text" />
-                        {item.status}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* Acciones */}
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() =>
-                        alert(`Ver detalle de cita de ${item.patient}`)
-                      }
-                      className="text-xs font-semibold text-med-primary-700 hover:text-med-primary-900 transition hover:underline"
-                    >
-                      Ver Detalle
-                    </button>
+              {!hasSearched ? (
+                <tr>
+                  <td colSpan="5" className="px-6 py-10 text-center text-xs text-med-text-muted">
+                    Aplicá filtros para buscar citas.
                   </td>
                 </tr>
-              ))}
+              ) : loading ? (
+                <tr>
+                  <td colSpan="5" className="px-6 py-10 text-center text-xs text-med-text-muted">
+                    Buscando...
+                  </td>
+                </tr>
+              ) : appointments.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="px-6 py-10 text-center text-xs text-med-text-muted">
+                    No se encontraron citas con esos filtros.
+                  </td>
+                </tr>
+              ) : (
+                appointments.map((item) => {
+                  const fecha = new Date(item.appointmentsId ? item.fecha : null);
+                  return (
+                    <tr key={item.appointmentsId} className="hover:bg-gray-50/70 transition-colors">
+                      {/* Fecha */}
+                      <td className="px-6 py-4">
+                        <p className="font-bold text-med-primary-900 text-sm">
+                          {fecha.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </p>
+                        <p className="text-xs text-med-text-muted mt-0.5">
+                          {fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </td>
+                      {/* Especialidad / Doctor */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-med-primary-100 text-med-primary-700 flex items-center justify-center shrink-0">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-med-primary-900">
+                              {item.doctor?.specialty?.name || 'Sin especialidad'}
+                            </p>
+                            <p className="text-xs text-med-text-muted">{item.doctor?.name}</p>
+                          </div>
+                        </div>
+                      </td>
+                      {/* Paciente */}
+                      <td className="px-6 py-4">
+                        <p className="font-semibold text-med-text-main">
+                          {item.patient?.fullName || 'Sin nombre'}
+                        </p>
+                        <p className="text-xs text-med-text-muted mt-0.5">
+                          DNI: {item.patient?.dni}
+                        </p>
+                      </td>
+                      {/* Estado */}
+                      <td className="px-6 py-4 text-center">
+                        {getStatusBadge(item.appointmentsStatus)}
+                      </td>
+                      {/* Acciones */}
+                      <td className="px-6 py-4 text-right">
+                        <span className="text-xs text-med-text-muted">—</span>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Paginador inferior normalizado */}
-        <div className="p-4 bg-med-primary-50/50 border-t border-med-border flex items-center justify-between text-xs text-med-text-muted">
-          <span>Mostrando 3 de 42 registros</span>
-          <div className="flex items-center gap-1">
-            <button className="px-2.5 py-1 border border-med-border rounded bg-white text-med-text-sub hover:bg-gray-50">
-              ‹
-            </button>
-            <button className="px-2.5 py-1 border border-med-border rounded bg-white text-med-text-sub hover:bg-gray-50">
-              ›
-            </button>
-          </div>
-        </div>
+        <TablePagination
+          currentPage={pageIndex}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+        />
       </Card>
     </div>
   );
