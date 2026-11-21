@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
 import useAuth from '../../auth/hook/useAuth';
-import { getDoctors, getDoctorAvailabilities, getDoctorSlots } from '../../doctors/services/doctorsService';
+import {
+  getDoctors,
+  getDoctorAvailabilities,
+  getDoctorSlots,
+} from '../../doctors/services/doctorsService';
 import { createAppointment } from '../../appointments/services/appointmentsService';
 
 function PatientHome() {
@@ -33,7 +37,8 @@ function PatientHome() {
 
   const currentDoctor = doctors.find((d) => d.id === selectedDoctorId) || null;
   const currentSlot =
-    slots.find((s) => (s.availabilitySlotId || s.id) === selectedSlotId) || null;
+    slots.find((s) => (s.availabilitySlotId || s.id) === selectedSlotId) ||
+    null;
 
   useEffect(() => {
     const fetchSpecialtiesFromDoctors = async () => {
@@ -44,6 +49,7 @@ function PatientHome() {
         // Extraemos especialidades únicas de los doctores
         const seen = new Set();
         const uniqueSpecialties = [];
+
         allDoctors.forEach((doc) => {
           if (doc.speciality && !seen.has(doc.speciality.specialityId)) {
             seen.add(doc.speciality.specialityId);
@@ -57,6 +63,7 @@ function PatientHome() {
         setLoadingSpecialties(false);
       }
     };
+
     fetchSpecialtiesFromDoctors();
   }, []);
 
@@ -66,8 +73,10 @@ function PatientHome() {
       setSelectedDoctorId('');
       setSlots([]);
       setSelectedSlotId('');
+
       return;
     }
+
     // Filtramos los doctores que ya cargamos
     const fetchDoctorsBySpecialty = async () => {
       try {
@@ -76,6 +85,7 @@ function PatientHome() {
         const filtered = (data.data || []).filter(
           (d) => d.speciality?.specialityId === selectedSpecialtyId
         );
+
         setDoctors(filtered);
         setSelectedDoctorId('');
         setSlots([]);
@@ -86,6 +96,7 @@ function PatientHome() {
         setLoadingDoctors(false);
       }
     };
+
     fetchDoctorsBySpecialty();
   }, [selectedSpecialtyId]);
 
@@ -93,8 +104,10 @@ function PatientHome() {
     if (!selectedDoctorId) {
       setSlots([]);
       setSelectedSlotId('');
+
       return;
     }
+
     const fetchSlots = async () => {
       try {
         setLoadingSlots(true);
@@ -107,6 +120,7 @@ function PatientHome() {
             s.status === '0' ||
             !s.status
         );
+
         setSlots(availableSlots);
         setSelectedSlotId('');
         setWeekOffset(0);
@@ -117,38 +131,64 @@ function PatientHome() {
         setLoadingSlots(false);
       }
     };
+
     fetchSlots();
   }, [selectedDoctorId]);
 
   const parseSlotDate = (slot) => {
     if (!slot) return null;
+
     if (slot.date) return new Date(slot.date);
-      const dateStr = slot.date;
+
+    const dateStr = slot.date;
     const timeStr = slot.startTime || slot.horaDeInicio || '00:00';
+
     if (!dateStr) return null;
-    return new Date(`${dateStr}T${timeStr.length === 5 ? timeStr + ':00' : timeStr}`);
+
+    return new Date(
+      `${dateStr}T${timeStr.length === 5 ? timeStr + ':00' : timeStr}`
+    );
   };
 
   const DAY_LABELS = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SÁB'];
-  const MONTH_LABELS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const MONTH_LABELS = [
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
+  ];
 
   // Devuelve el lunes de la semana actual + offset semanas
   const getWeekStart = (offset) => {
     const today = new Date();
+
     today.setHours(0, 0, 0, 0);
     const day = today.getDay(); // 0=dom
     const diff = day === 0 ? -6 : 1 - day; // retroceder al lunes
     const monday = new Date(today);
+
     monday.setDate(today.getDate() + diff + offset * 7);
+
     return monday;
   };
 
   // Genera los 5 días Lun-Vie de la semana
   const getWeekDays = (offset) => {
     const monday = getWeekStart(offset);
+
     return Array.from({ length: 5 }, (_, i) => {
       const d = new Date(monday);
+
       d.setDate(monday.getDate() + i);
+
       return d;
     });
   };
@@ -157,21 +197,31 @@ function PatientHome() {
   const slotsByDay = slots.reduce((acc, slot) => {
     const fecha = parseSlotDate(slot);
     const key = slot.date || (fecha ? fecha.toISOString().slice(0, 10) : null);
+
     if (!key) return acc;
+
     if (!acc[key]) acc[key] = [];
+
     acc[key].push(slot);
+
     return acc;
   }, {});
 
   const handleConfirmAppointment = async () => {
     if (!selectedDoctorId || !selectedSlotId || !reason.trim()) {
-      setErrorMessage('Seleccioná un doctor, un horario y escribí el motivo de la consulta.');
+      setErrorMessage(
+        'Seleccioná un doctor, un horario y escribí el motivo de la consulta.'
+      );
+
       return;
     }
+
     if (!user?.dni) {
       setErrorMessage('No se encontró el DNI del paciente.');
+
       return;
     }
+
     try {
       setSubmitting(true);
       setErrorMessage('');
@@ -181,6 +231,7 @@ function PatientHome() {
         patient: { dni: Number(user.dni) },
         reason: reason.trim(),
       });
+
       setConfirmedData(result);
       setConfirmedModal(true);
       // Actualizamos los slots para no mostrar el que acabamos de reservar
@@ -190,8 +241,8 @@ function PatientHome() {
     } catch (err) {
       setErrorMessage(
         err?.response?.data?.details?.[0]?.issue ||
-        err?.response?.data?.message ||
-        'No se pudo confirmar el turno.'
+          err?.response?.data?.message ||
+          'No se pudo confirmar el turno.'
       );
     } finally {
       setSubmitting(false);
@@ -225,7 +276,9 @@ function PatientHome() {
                 disabled={loadingSpecialties}
               >
                 <option value="">
-                  {loadingSpecialties ? 'Cargando...' : 'Seleccione una especialidad'}
+                  {loadingSpecialties
+                    ? 'Cargando...'
+                    : 'Seleccione una especialidad'}
                 </option>
                 {specialties.map((sp) => (
                   <option key={sp.specialityId} value={sp.specialityId}>
@@ -252,7 +305,13 @@ function PatientHome() {
                 disabled={!selectedSpecialtyId || loadingDoctors}
               >
                 <option value="">
-                  {loadingDoctors ? 'Cargando...' : !selectedSpecialtyId ? 'Primero seleccione una especialidad' : doctors.length === 0 ? 'Sin doctores disponibles' : 'Seleccione un doctor'}
+                  {loadingDoctors
+                    ? 'Cargando...'
+                    : !selectedSpecialtyId
+                      ? 'Primero seleccione una especialidad'
+                      : doctors.length === 0
+                        ? 'Sin doctores disponibles'
+                        : 'Seleccione un doctor'}
                 </option>
                 {doctors.map((doc) => (
                   <option key={doc.id} value={doc.id}>
@@ -271,7 +330,7 @@ function PatientHome() {
             <Button
               type="button"
               className="w-full flex items-center justify-center gap-2 bg-med-primary-900 hover:bg-med-primary-800 text-white font-medium py-2.5 rounded-lg shadow-sm"
-              onClick={() => { }}
+              onClick={() => {}}
             >
               <svg
                 className="w-4 h-4"
@@ -328,7 +387,6 @@ function PatientHome() {
 
       {/* 3. Selector Semanal de Turnos */}
       <Card className="p-5 sm:p-6 border-med-border">
-
         {/* Fila 1: Título + Leyenda */}
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-sm sm:text-base text-med-primary-900">
@@ -354,92 +412,119 @@ function PatientHome() {
           <p className="text-xs text-med-text-muted text-center py-6">
             Cargando horarios...
           </p>
-        ) : (() => {
-          const weekDays = getWeekDays(weekOffset);
-          const monday = weekDays[0];
-          const friday = weekDays[4];
-          const DAY_FULL = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-          const navLabel = `${DAY_FULL[monday.getDay()]} ${monday.getDate()} - ${DAY_FULL[friday.getDay()]} ${friday.getDate()}, ${MONTH_LABELS[friday.getMonth()]}`;
+        ) : (
+          (() => {
+            const weekDays = getWeekDays(weekOffset);
+            const monday = weekDays[0];
+            const friday = weekDays[4];
+            const DAY_FULL = [
+              'Domingo',
+              'Lunes',
+              'Martes',
+              'Miércoles',
+              'Jueves',
+              'Viernes',
+              'Sábado',
+            ];
+            const navLabel = `${DAY_FULL[monday.getDay()]} ${monday.getDate()} - ${DAY_FULL[friday.getDay()]} ${friday.getDate()}, ${MONTH_LABELS[friday.getMonth()]}`;
 
-          return (
-            <>
-              {/* Fila 2: Navegación semanal */}
-              <div className="flex items-center gap-2 mb-5">
-                <button
-                  type="button"
-                  onClick={() => setWeekOffset((w) => w - 1)}
-                  disabled={weekOffset === 0}
-                  className="flex h-7 w-5 items-center justify-center rounded-md border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 disabled:opacity-30">
-                  ‹
-                </button>
-                <span className="text-base text-med-primary-900">{navLabel}</span>
-                <button
-                  type="button"
-                  onClick={() => setWeekOffset((w) => w + 1)}
-                  className="flex h-7 w-5 items-center justify-center rounded-md border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 disabled:opacity-30">
-                  ›
-                </button>
-              </div>
+            return (
+              <>
+                {/* Fila 2: Navegación semanal */}
+                <div className="flex items-center gap-2 mb-5">
+                  <button
+                    type="button"
+                    onClick={() => setWeekOffset((w) => w - 1)}
+                    disabled={weekOffset === 0}
+                    className="flex h-7 w-5 items-center justify-center rounded-md border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 disabled:opacity-30"
+                  >
+                    ‹
+                  </button>
+                  <span className="text-base text-med-primary-900">
+                    {navLabel}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setWeekOffset((w) => w + 1)}
+                    className="flex h-7 w-5 items-center justify-center rounded-md border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 disabled:opacity-30"
+                  >
+                    ›
+                  </button>
+                </div>
 
-              {/* Columnas de días */}
-              <div className="grid grid-cols-5 gap-3">
-                {weekDays.map((day) => {
-                  const dayKey = day.toISOString().slice(0, 10);
-                  const daySlots = (slotsByDay[dayKey] || []).sort((a, b) =>
-                    (a.startTime || '').localeCompare(b.startTime || '')
-                  );
-                  const isPast = day < new Date(new Date().setHours(0, 0, 0, 0));
+                {/* Columnas de días */}
+                <div className="grid grid-cols-5 gap-3">
+                  {weekDays.map((day) => {
+                    const dayKey = day.toISOString().slice(0, 10);
+                    const daySlots = (slotsByDay[dayKey] || []).sort((a, b) =>
+                      (a.startTime || '').localeCompare(b.startTime || '')
+                    );
+                    const isPast =
+                      day < new Date(new Date().setHours(0, 0, 0, 0));
 
-                  return (
-                    <div key={dayKey} className="flex flex-col items-stretch gap-1.5">
-                      {/* Cabecera del día */}
-                      <div className="text-center mb-2">
-                        <p className="text-[11px] font-semibold text-med-text-sub uppercase tracking-wide">
-                          {DAY_LABELS[day.getDay()]}
-                        </p>
-                        <p className="text-xl font-bold text-med-primary-900">
-                          {day.getDate()}
-                        </p>
-                      </div>
+                    return (
+                      <div
+                        key={dayKey}
+                        className="flex flex-col items-stretch gap-1.5"
+                      >
+                        {/* Cabecera del día */}
+                        <div className="text-center mb-2">
+                          <p className="text-[11px] font-semibold text-med-text-sub uppercase tracking-wide">
+                            {DAY_LABELS[day.getDay()]}
+                          </p>
+                          <p className="text-xl font-bold text-med-primary-900">
+                            {day.getDate()}
+                          </p>
+                        </div>
 
-                      {/* Slots o mensaje */}
-                      {isPast ? (
-                        <p className="text-[10px] text-med-text-muted text-center italic leading-snug">
-                          Día pasado
-                        </p>
-                      ) : daySlots.length === 0 ? (
-                        <p className="text-[10px] text-med-text-muted text-center italic leading-snug px-1">
-                          No hay turnos disponibles para este día.
-                        </p>
-                      ) : (
-                        daySlots.map((slot) => {
-                          const slotId = slot.availabilitySlotId || slot.id;
-                          const isSelected = selectedSlotId === slotId;
-                          const timeDisplay = slot.startTime || (parseSlotDate(slot)
-                            ? parseSlotDate(slot).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
-                            : '');
-                          return (
-                            <button
-                              key={slotId}
-                              type="button"
-                              onClick={() => setSelectedSlotId(isSelected ? '' : slotId)}
-                              className={`w-full py-2 text-xs font-semibold rounded-lg border transition-all text-center ${isSelected
-                                ? 'bg-emerald-400 text-white border-emerald-400 shadow-sm'
-                                : 'bg-white border-med-border text-med-primary-900 hover:border-med-primary-600 hover:bg-med-primary-50/50'
+                        {/* Slots o mensaje */}
+                        {isPast ? (
+                          <p className="text-[10px] text-med-text-muted text-center italic leading-snug">
+                            Día pasado
+                          </p>
+                        ) : daySlots.length === 0 ? (
+                          <p className="text-[10px] text-med-text-muted text-center italic leading-snug px-1">
+                            No hay turnos disponibles para este día.
+                          </p>
+                        ) : (
+                          daySlots.map((slot) => {
+                            const slotId = slot.availabilitySlotId || slot.id;
+                            const isSelected = selectedSlotId === slotId;
+                            const timeDisplay =
+                              slot.startTime ||
+                              (parseSlotDate(slot)
+                                ? parseSlotDate(slot).toLocaleTimeString(
+                                  'es-AR',
+                                  { hour: '2-digit', minute: '2-digit' }
+                                )
+                                : '');
+
+                            return (
+                              <button
+                                key={slotId}
+                                type="button"
+                                onClick={() =>
+                                  setSelectedSlotId(isSelected ? '' : slotId)
+                                }
+                                className={`w-full py-2 text-xs font-semibold rounded-lg border transition-all text-center ${
+                                  isSelected
+                                    ? 'bg-emerald-400 text-white border-emerald-400 shadow-sm'
+                                    : 'bg-white border-med-border text-med-primary-900 hover:border-med-primary-600 hover:bg-med-primary-50/50'
                                 }`}
-                            >
-                              {timeDisplay}
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          );
-        })()}
+                              >
+                                {timeDisplay}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            );
+          })()
+        )}
 
         {/* Campo Motivo */}
         {selectedSlotId && (
@@ -471,7 +556,9 @@ function PatientHome() {
                 <span>
                   {(() => {
                     const d = parseSlotDate(currentSlot);
+
                     if (!d) return '';
+
                     const dateFormatted = d.toLocaleDateString('es-AR', {
                       weekday: 'long',
                       day: '2-digit',
@@ -480,7 +567,11 @@ function PatientHome() {
                     });
                     const timeFormatted =
                       currentSlot.startTime ||
-                      d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+                      d.toLocaleTimeString('es-AR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      });
+
                     return `${dateFormatted} - ${timeFormatted} hs`;
                   })()}
                 </span>
@@ -506,8 +597,18 @@ function PatientHome() {
             className="flex items-center justify-center gap-2 bg-med-primary-900 hover:bg-med-primary-800 text-white font-medium py-3 px-6 rounded-xl shadow-md text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span>{submitting ? 'Confirmando...' : 'Confirmar Turno'}</span>
-            <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-5 h-5 text-emerald-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
           </Button>
         </div>
@@ -520,27 +621,43 @@ function PatientHome() {
             <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
               ✓
             </div>
-            <h3 className="text-xl font-bold text-med-primary-900">¡Turno Confirmado!</h3>
+            <h3 className="text-xl font-bold text-med-primary-900">
+              ¡Turno Confirmado!
+            </h3>
             <p className="text-xs text-med-text-sub mt-2 leading-relaxed">
               Tu turno con{' '}
-              <strong className="text-med-text-main">{confirmedData.doctorName}</strong>{' '}
+              <strong className="text-med-text-main">
+                {confirmedData.doctorName}
+              </strong>{' '}
               fue reservado para el{' '}
               <strong className="text-med-text-main">
                 {new Date(confirmedData.date).toLocaleDateString('es-AR', {
-                  weekday: 'long', day: '2-digit', month: 'long'
+                  weekday: 'long',
+                  day: '2-digit',
+                  month: 'long',
                 })}{' '}
                 a las{' '}
                 {new Date(confirmedData.date).toLocaleTimeString('es-AR', {
-                  hour: '2-digit', minute: '2-digit'
-                })} hs
-              </strong>.
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}{' '}
+                hs
+              </strong>
+              .
             </p>
             <div className="mt-5 p-3.5 bg-med-primary-50 border border-med-primary-200/60 rounded-xl text-xs text-med-primary-900 text-left space-y-1">
-              <p><strong>Motivo:</strong> {confirmedData.reason}</p>
-              <p><strong>DNI Paciente:</strong> {user?.dni}</p>
+              <p>
+                <strong>Motivo:</strong> {confirmedData.reason}
+              </p>
+              <p>
+                <strong>DNI Paciente:</strong> {user?.dni}
+              </p>
             </div>
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Button className="w-full text-xs py-2.5" onClick={() => navigate('/appointments')}>
+              <Button
+                className="w-full text-xs py-2.5"
+                onClick={() => navigate('/appointments')}
+              >
                 Ver Mis Turnos
               </Button>
               <Button

@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Heart, Lightbulb, FlaskConical, Smile, Stethoscope, Pencil, Trash2, Save, } from 'lucide-react';
+import {
+  Heart,
+  Lightbulb,
+  FlaskConical,
+  Smile,
+  Stethoscope,
+  Pencil,
+  Trash2,
+  Save,
+} from 'lucide-react';
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
 import TablePagination from '../../shared/components/TablePagination';
@@ -129,22 +138,27 @@ function SpecialtiesPage() {
   };
 
   const totalPages = Math.ceil(totalItems / pageSize) || 1;
-  
+
   //este es para asignarle a un icono a cada especialidad distinta
   const getSpecialtyIcon = (name = '') => {
     const lower = name.toLowerCase();
+
     if (lower.includes('cardio') || lower.includes('coraz')) {
       return <Heart className="w-4 h-4" />;
     }
+
     if (lower.includes('neuro') || lower.includes('cerebr')) {
       return <Lightbulb className="w-4 h-4" />;
     }
+
     if (lower.includes('derma') || lower.includes('piel')) {
       return <FlaskConical className="w-4 h-4" />;
     }
+
     if (lower.includes('pedia') || lower.includes('niñ')) {
       return <Smile className="w-4 h-4" />;
     }
+
     return <Stethoscope className="w-4 h-4" />;
   };
 
@@ -163,23 +177,31 @@ function SpecialtiesPage() {
           </button>
           <span>›</span>
           <span className="font-semibold text-med-primary-900">
-            {editingSpecialty ? 'Modificar Especialidad' : 'Agregar Nueva Especialidad'}
+            {editingSpecialty
+              ? 'Modificar Especialidad'
+              : 'Agregar Nueva Especialidad'}
           </span>
         </div>
 
         {/* Encabezado */}
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-med-text-main">
-            {editingSpecialty ? 'Modificar Especialidad' : 'Registrar Nueva Especialidad'}
+            {editingSpecialty
+              ? 'Modificar Especialidad'
+              : 'Registrar Nueva Especialidad'}
           </h1>
           <p className="text-sm text-med-text-sub mt-1">
-            Complete la información técnica y administrativa para dar de alta una especialidad médica en el sistema hospitalario.
+            Complete la información técnica y administrativa para dar de alta
+            una especialidad médica en el sistema hospitalario.
           </p>
         </div>
 
         {/* Tarjeta del Formulario */}
         <Card className="p-6 sm:p-8 bg-white border border-med-border rounded-xl shadow-xs">
-          <form onSubmit={handleSubmit(onSaveSpecialty)} className="flex flex-col gap-6">
+          <form
+            onSubmit={handleSubmit(onSaveSpecialty)}
+            className="flex flex-col gap-6"
+          >
             {modalError && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600">
                 {modalError}
@@ -195,12 +217,20 @@ function SpecialtiesPage() {
                 type="text"
                 placeholder="Ej. Cardiología Intervencionista"
                 className={`w-full border rounded-lg px-3.5 py-2.5 text-xs bg-white text-med-text-main focus:outline-none focus:ring-1 focus:ring-med-primary-600 ${
-                  errors.name ? 'border-red-400 bg-red-50/20' : 'border-med-border'
+                  errors.name
+                    ? 'border-red-400 bg-red-50/20'
+                    : 'border-med-border'
                 }`}
                 {...register('name', {
                   required: 'El nombre es obligatorio',
-                  minLength: { value: 3, message: 'Debe tener al menos 3 caracteres' },
-                  maxLength: { value: 100, message: 'No debe superar los 100 caracteres' },
+                  minLength: {
+                    value: 3,
+                    message: 'Debe tener al menos 3 caracteres',
+                  },
+                  maxLength: {
+                    value: 100,
+                    message: 'No debe superar los 100 caracteres',
+                  },
                 })}
               />
               {errors.name && (
@@ -219,12 +249,20 @@ function SpecialtiesPage() {
                 rows="4"
                 placeholder="Detalle el alcance de la especialidad, procedimientos principales y requisitos de derivación..."
                 className={`w-full border rounded-lg px-3.5 py-2.5 text-xs bg-white text-med-text-main focus:outline-none focus:ring-1 focus:ring-med-primary-600 ${
-                  errors.description ? 'border-red-400 bg-red-50/20' : 'border-med-border'
+                  errors.description
+                    ? 'border-red-400 bg-red-50/20'
+                    : 'border-med-border'
                 }`}
                 {...register('description', {
                   required: 'La descripción es obligatoria',
-                  minLength: { value: 10, message: 'Debe tener al menos 10 caracteres' },
-                  maxLength: { value: 250, message: 'No debe superar los 250 caracteres' },
+                  minLength: {
+                    value: 10,
+                    message: 'Debe tener al menos 10 caracteres',
+                  },
+                  maxLength: {
+                    value: 250,
+                    message: 'No debe superar los 250 caracteres',
+                  },
                 })}
               />
               {errors.description && (
@@ -245,11 +283,23 @@ function SpecialtiesPage() {
                   defaultValue="activo"
                   className="w-full border border-med-border rounded-lg px-3.5 py-2.5 text-xs bg-gray-50 text-med-text-main appearance-none cursor-not-allowed"
                 >
-                  <option value="activo">Activo - Disponible para programación</option>
+                  <option value="activo">
+                    Activo - Disponible para programación
+                  </option>
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-med-text-muted">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </div>
               </div>
@@ -270,7 +320,11 @@ function SpecialtiesPage() {
                 className="px-5 py-2 text-xs bg-med-primary-900 hover:bg-med-primary-800 text-white flex items-center gap-2"
               >
                 <Save className="w-3.5 h-3.5" />
-                <span>{editingSpecialty ? 'Guardar Cambios' : 'Guardar Especialidad'}</span>
+                <span>
+                  {editingSpecialty
+                    ? 'Guardar Cambios'
+                    : 'Guardar Especialidad'}
+                </span>
               </Button>
             </div>
           </form>
@@ -278,6 +332,7 @@ function SpecialtiesPage() {
       </div>
     );
   }
+
   return (
     <div className="flex flex-col gap-6">
       {/* Cabecera con Título, Buscador y Botón */}
@@ -377,7 +432,7 @@ function SpecialtiesPage() {
                 </tr>
               ) : (
                 specialties.map((spec) => (
-                                    <tr
+                  <tr
                     key={spec.id}
                     className="hover:bg-med-hover-row transition duration-150"
                   >

@@ -7,7 +7,6 @@ import { getAppointments } from '../services/GetAppointmentsService';
 import { deleteAppointment } from '../services/DeleteAppointmentsService';
 
 function AppointmentsPage() {
-
   const { user } = useAuth();
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
@@ -35,14 +34,18 @@ function AppointmentsPage() {
 
   const fetchAppointments = async () => {
     if (!user?.dni) return;
+
     try {
       setLoading(true);
       setError(null);
       const data = await getAppointments(user.dni);
+
       setAppointments(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error al cargar turnos:', err);
-      setError(err?.response?.data?.message || 'Error al obtener tus turnos médicos.');
+      setError(
+        err?.response?.data?.message || 'Error al obtener tus turnos médicos.'
+      );
     } finally {
       setLoading(false);
     }
@@ -51,7 +54,6 @@ function AppointmentsPage() {
   useEffect(() => {
     fetchAppointments();
   }, [user?.dni]);
-
 
   const handleDeleteAppointment = async (id) => {
     try {
@@ -73,9 +75,7 @@ function AppointmentsPage() {
             Consulta y gestiona las citas médicas programadas.
           </p>
         </div>
-        <Button onClick={() => navigate('/')}>
-          + Solicitar Nuevo Turno
-        </Button>
+        <Button onClick={() => navigate('/')}>+ Solicitar Nuevo Turno</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -85,7 +85,10 @@ function AppointmentsPage() {
           </p>
         ) : (
           appointments.map((appt) => {
-            const fechaObj = new Date(appt.Date);
+            // La API devuelve "date" en camelCase (DateTime serializado como ISO string)
+            const fechaObj = new Date(appt.date);
+            const fechaValida = !isNaN(fechaObj.getTime());
+
             return (
               <Card
                 key={appt.id}
@@ -105,14 +108,16 @@ function AppointmentsPage() {
                   <p className="text-sm text-med-text-sub mt-2">
                     Fecha:{' '}
                     <strong className="text-med-text-main font-semibold">
-                      {fechaObj.toLocaleDateString('es-AR')}
+                      {fechaValida ? fechaObj.toLocaleDateString('es-AR') : '—'}
                     </strong>{' '}
                     a las{' '}
                     <strong className="text-med-text-main font-semibold">
-                      {fechaObj.toLocaleTimeString('es-AR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}{' '}
+                      {fechaValida
+                        ? fechaObj.toLocaleTimeString('es-AR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                        : '—'}{' '}
                     </strong>
                   </p>
                 </div>
