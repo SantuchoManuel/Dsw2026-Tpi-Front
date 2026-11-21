@@ -16,7 +16,6 @@ function PatientHome() {
 
   const [slots, setSlots] = useState([]);
 
-
   const [selectedSpecialtyId, setSelectedSpecialtyId] = useState('');
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
   const [selectedSlotId, setSelectedSlotId] = useState('');
@@ -26,6 +25,7 @@ function PatientHome() {
 
   const [loadingSlots, setLoadingSlots] = useState(false);
 
+  const [weekOffset, setWeekOffset] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [confirmedModal, setConfirmedModal] = useState(false);
   const [confirmedData, setConfirmedData] = useState(null);
@@ -109,6 +109,7 @@ function PatientHome() {
         );
         setSlots(availableSlots);
         setSelectedSlotId('');
+        setWeekOffset(0);
       } catch (err) {
         console.error('Error cargando turnos del doctor:', err);
         setSlots([]);
@@ -127,6 +128,40 @@ function PatientHome() {
     if (!dateStr) return null;
     return new Date(`${dateStr}T${timeStr.length === 5 ? timeStr + ':00' : timeStr}`);
   };
+
+  const DAY_LABELS = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SÁB'];
+  const MONTH_LABELS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+  // Devuelve el lunes de la semana actual + offset semanas
+  const getWeekStart = (offset) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const day = today.getDay(); // 0=dom
+    const diff = day === 0 ? -6 : 1 - day; // retroceder al lunes
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diff + offset * 7);
+    return monday;
+  };
+
+  // Genera los 5 días Lun-Vie de la semana
+  const getWeekDays = (offset) => {
+    const monday = getWeekStart(offset);
+    return Array.from({ length: 5 }, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      return d;
+    });
+  };
+
+  // Slots agrupados por 'YYYY-MM-DD'
+  const slotsByDay = slots.reduce((acc, slot) => {
+    const fecha = parseSlotDate(slot);
+    const key = slot.date || (fecha ? fecha.toISOString().slice(0, 10) : null);
+    if (!key) return acc;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(slot);
+    return acc;
+  }, {});
 
   const handleConfirmAppointment = async () => {
     if (!selectedDoctorId || !selectedSlotId || !reason.trim()) {
@@ -293,14 +328,24 @@ function PatientHome() {
 
       {/* 3. Selector Semanal de Turnos */}
       <Card className="p-5 sm:p-6 border-med-border">
-        <div className="mb-4">
+
+        {/* Fila 1: Título + Leyenda */}
+        <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-sm sm:text-base text-med-primary-900">
             Horarios Disponibles
           </h3>
-          <p className="text-xs text-med-text-sub mt-0.5">
-            Seleccioná un turno disponible para continuar.
-          </p>
+          <div className="flex items-center gap-4 text-[11px] text-med-text-sub">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-med-primary-900 inline-block" />
+              Disponible
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" />
+              Seleccionado
+            </span>
+          </div>
         </div>
+
         {!selectedDoctorId ? (
           <p className="text-xs text-med-text-muted text-center py-6">
             Seleccioná un doctor para ver sus horarios.
@@ -309,41 +354,93 @@ function PatientHome() {
           <p className="text-xs text-med-text-muted text-center py-6">
             Cargando horarios...
           </p>
-        ) : slots.length === 0 ? (
-          <p className="text-xs text-med-text-muted text-center py-6">
-            Este doctor no tiene turnos disponibles en este momento.
-          </p>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {slots.map((slot) => {
-              const slotId = slot.availabilitySlotId || slot.id;
-              const fecha = parseSlotDate(slot);
-              const isSelected = selectedSlotId === slotId;
-              const timeDisplay = slot.startTime || (fecha ? fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '');
+        ) : (() => {
+          const weekDays = getWeekDays(weekOffset);
+          const monday = weekDays[0];
+          const friday = weekDays[4];
+          const DAY_FULL = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+          const navLabel = `${DAY_FULL[monday.getDay()]} ${monday.getDate()} - ${DAY_FULL[friday.getDay()]} ${friday.getDate()}, ${MONTH_LABELS[friday.getMonth()]}`;
 
-              return (
+          return (
+            <>
+              {/* Fila 2: Navegación semanal */}
+              <div className="flex items-center gap-2 mb-5">
                 <button
-                  key={slotId}
                   type="button"
-                  onClick={() => setSelectedSlotId(slotId)}
-                  className={`py-2.5 px-3 text-xs font-semibold rounded-lg border transition-all text-center ${isSelected
-                    ? 'bg-emerald-400 text-white border-emerald-400 shadow-sm'
-                    : 'bg-white border-med-border text-med-primary-900 hover:border-med-primary-600 hover:bg-med-primary-50/50'
-                    }`}
-                >
-                  <span className="block font-bold capitalize">
-                    {fecha
-                      ? fecha.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit' })
-                      : slot.date}
-                  </span>
-                  <span className="block mt-0.5">
-                    {timeDisplay} hs
-                  </span>
+                  onClick={() => setWeekOffset((w) => w - 1)}
+                  disabled={weekOffset === 0}
+                  className="flex h-7 w-5 items-center justify-center rounded-md border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 disabled:opacity-30">
+                  ‹
                 </button>
-              );
-            })}
-          </div>
-        )}
+                <span className="text-base text-med-primary-900">{navLabel}</span>
+                <button
+                  type="button"
+                  onClick={() => setWeekOffset((w) => w + 1)}
+                  className="flex h-7 w-5 items-center justify-center rounded-md border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 disabled:opacity-30">
+                  ›
+                </button>
+              </div>
+
+              {/* Columnas de días */}
+              <div className="grid grid-cols-5 gap-3">
+                {weekDays.map((day) => {
+                  const dayKey = day.toISOString().slice(0, 10);
+                  const daySlots = (slotsByDay[dayKey] || []).sort((a, b) =>
+                    (a.startTime || '').localeCompare(b.startTime || '')
+                  );
+                  const isPast = day < new Date(new Date().setHours(0, 0, 0, 0));
+
+                  return (
+                    <div key={dayKey} className="flex flex-col items-stretch gap-1.5">
+                      {/* Cabecera del día */}
+                      <div className="text-center mb-2">
+                        <p className="text-[11px] font-semibold text-med-text-sub uppercase tracking-wide">
+                          {DAY_LABELS[day.getDay()]}
+                        </p>
+                        <p className="text-xl font-bold text-med-primary-900">
+                          {day.getDate()}
+                        </p>
+                      </div>
+
+                      {/* Slots o mensaje */}
+                      {isPast ? (
+                        <p className="text-[10px] text-med-text-muted text-center italic leading-snug">
+                          Día pasado
+                        </p>
+                      ) : daySlots.length === 0 ? (
+                        <p className="text-[10px] text-med-text-muted text-center italic leading-snug px-1">
+                          No hay turnos disponibles para este día.
+                        </p>
+                      ) : (
+                        daySlots.map((slot) => {
+                          const slotId = slot.availabilitySlotId || slot.id;
+                          const isSelected = selectedSlotId === slotId;
+                          const timeDisplay = slot.startTime || (parseSlotDate(slot)
+                            ? parseSlotDate(slot).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+                            : '');
+                          return (
+                            <button
+                              key={slotId}
+                              type="button"
+                              onClick={() => setSelectedSlotId(isSelected ? '' : slotId)}
+                              className={`w-full py-2 text-xs font-semibold rounded-lg border transition-all text-center ${isSelected
+                                ? 'bg-emerald-400 text-white border-emerald-400 shadow-sm'
+                                : 'bg-white border-med-border text-med-primary-900 hover:border-med-primary-600 hover:bg-med-primary-50/50'
+                                }`}
+                            >
+                              {timeDisplay}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          );
+        })()}
+
         {/* Campo Motivo */}
         {selectedSlotId && (
           <div className="mt-5 flex flex-col gap-1.5">
