@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
 import { getDoctors } from '../../doctors/services/doctorsService';
+import { getSpecialties } from '../../specialties/services/specialtiesService';
 import TablePagination from '../../shared/components/TablePagination';
 
 function OverviewPage() {
@@ -13,6 +14,7 @@ function OverviewPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [pageIndex, setPageIndex] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalSpecilities, setTotalSpecialities] = useState(0);
 
   const fetchDoctors = async (page = pageIndex, name = searchTerm) => {
     try {
@@ -27,6 +29,20 @@ function OverviewPage() {
       setLoadingDoctors(false);
     }
   };
+
+
+  const fetchSpecialities = async () => {
+    try {
+      const data = await getSpecialties({ pageSize: 1, pageIndex: 1 });
+      setTotalSpecialities(data.total || 0);
+    } catch (err) {
+      console.error('Error al cargar especialidades:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchSpecialities();
+  }, []);
 
   useEffect(() => {
     fetchDoctors(pageIndex, searchTerm);
@@ -128,7 +144,7 @@ function OverviewPage() {
               Doctores Activos
             </span>
             <p className="text-3xl sm:text-4xl font-extrabold text-med-primary-900 mt-1">
-              124
+              {totalDoctors}
             </p>
           </div>
         </Card>
@@ -161,7 +177,7 @@ function OverviewPage() {
               Especialidades Activas
             </span>
             <p className="text-3xl sm:text-4xl font-extrabold text-med-primary-900 mt-1">
-              32
+              {totalSpecilities}
             </p>
           </div>
         </Card>

@@ -5,13 +5,12 @@ function TablePagination({
   pageSize = 10,
   onPageChange,
 }) {
-  const from = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-  const to = Math.min(currentPage * pageSize, totalItems);
+  const currents = Math.min(currentPage * pageSize, totalItems);
 
   return (
     <div className="p-4 bg-med-primary-50/50 border-t border-med-border flex items-center justify-between text-xs text-med-text-muted">
       <span>
-        Mostrando {from} a {to} de {totalItems} registros
+        Mostrando {currents} de {totalItems} registros
       </span>
       <div className="flex items-center gap-1">
         <button
