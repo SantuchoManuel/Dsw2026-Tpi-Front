@@ -1,31 +1,45 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Stethoscope, Save, IdCard, Info, Timer } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  Stethoscope,
+  Save,
+  IdCard,
+  Info,
+  Timer,
+  User,
+  Search,
+} from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
+import Input from '../../shared/components/Input';
 import TablePagination from '../../shared/components/TablePagination';
 import {
-  getDoctors,
   createDoctor,
   updateDoctor,
   deleteDoctor,
   createAvailability,
 } from '../services/doctorsService';
+import useDoctors from '../hook/useDoctors';
 import { getSpecialties } from '../../specialties/services/specialtiesService';
 
 function DoctorsPage() {
   //estos serian los estados para datos y carga
-  const [doctors, setDoctors] = useState([]);
   const [specialties, setSpecialties] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [appliedSearch, setAppliedSearch] = useState('');
+  //la lista de doctores ahora viene del hook
+  const {
+    doctors,
+    loading,
+    pageIndex,
+    setPageIndex,
+    totalPages,
+    totalCount,
+    pageSize,
+    buscar,
+    recargar,
+  } = useDoctors();
 
-  //estados de paginacion
-  const [pageIndex, setPageIndex] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const pageSize = 5;
+
 
   //estados del modal crear y editar
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -91,25 +105,8 @@ function DoctorsPage() {
     fetchSpecialties();
   }, []);
 
-  //funcion pa que traigamos a los doctores paginados
-  const fetchDoctors = useCallback(async (page, name) => {
-    try {
-      setLoading(true);
-      const data = await getDoctors({ pageSize: 5, pageIndex: page, name });
 
-      setDoctors(data.data || []);
-      setTotalCount(data.total || 0);
-      setTotalPages(Math.ceil((data.total || 0) / 5) || 1);
-    } catch (err) {
-      console.error('Error al cargar doctores en overview:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
-  useEffect(() => {
-    fetchDoctors(pageIndex, appliedSearch);
-  }, [pageIndex, appliedSearch, fetchDoctors]);
 
   //modal para crear
   const handleOpenCreateModal = () => {
@@ -144,7 +141,7 @@ function DoctorsPage() {
 
       setIsModalOpen(false);
       reset();
-      fetchDoctors(pageIndex, searchTerm);
+      recargar();
     } catch (err) {
       setFormError(
         err?.response?.data?.message || 'Error al guardar los datos del medico.'
@@ -162,17 +159,16 @@ function DoctorsPage() {
 
     try {
       await deleteDoctor(doctor.id);
-      fetchDoctors(pageIndex, searchTerm);
+      recargar();
     } catch (err) {
       alert(err?.response?.data?.message || 'Error al eliminar el doctor.');
     }
   };
 
-  //busqueda al presionar enter o cambiar una palabra
+  //busqueda al presionar enter
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    setPageIndex(1);
-    setAppliedSearch(searchTerm);
+    buscar(searchTerm);
   };
 
   //abrir el modal de disponibilidad
@@ -307,7 +303,7 @@ function DoctorsPage() {
           </span>
         </div>
         {/* Tarjeta Principal de Registro */}
-        <Card className="p-6 sm:p-8 bg-white border border-med-border rounded-xl shadow-xs">
+        <Card className="p-6 sm:p-8">
           <div className="flex items-start gap-3 pb-6 border-b border-med-border">
             <div className="p-2.5 rounded-lg bg-med-primary-50 text-med-primary-900">
               <svg
@@ -344,49 +340,23 @@ function DoctorsPage() {
               </div>
             )}
             {/* Nombre Completo del Doctor */}
-            <div>
-              <label className="block text-xs font-bold text-med-text-main mb-2">
-                Nombre Completo del Doctor
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-med-text-muted">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                </span>
-                <input
-                  type="text"
-                  placeholder="Ej: Dr. Alejandro Martínez"
-                  {...register('name', {
-                    required: 'El nombre es obligatorio',
-                    minLength: {
-                      value: 3,
-                      message: 'Debe tener al menos 3 caracteres',
-                    },
-                    maxLength: {
-                      value: 100,
-                      message: 'No puede exceder 100 caracteres',
-                    },
-                  })}
-                  className="w-full pl-9 pr-3 py-2.5 text-xs bg-white border border-med-border rounded-lg text-med-text-main placeholder-med-text-muted focus:outline-none focus:ring-1 focus:ring-med-primary-600"
-                />
-              </div>
-              {errors.name && (
-                <p className="text-red-500 text-[11px] mt-1">
-                  {errors.name.message}
-                </p>
-              )}
-            </div>
+            <Input
+              label="Nombre Completo del Doctor"
+              placeholder="Ej: Dr. Alejandro Martínez"
+              icon={<User className="w-4 h-4" />}
+              error={errors.name?.message}
+              {...register('name', {
+                required: 'El nombre es obligatorio',
+                minLength: {
+                  value: 3,
+                  message: 'Debe tener al menos 3 caracteres',
+                },
+                maxLength: {
+                  value: 100,
+                  message: 'No puede exceder 100 caracteres',
+                },
+              })}
+            />
             {/* Dos Columnas: Especialidad y Número de Licencia */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Especialidad */}
@@ -422,29 +392,15 @@ function DoctorsPage() {
                 )}
               </div>
               {/* Número de Licencia Médica */}
-              <div>
-                <label className="block text-xs font-bold text-med-text-main mb-2">
-                  Número de Licencia Médica
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-med-text-muted">
-                    <IdCard className="w-4 h-4 text-med-text-muted" />
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="ID-45920-X"
-                    {...register('licenseNumber', {
-                      required: 'El número de licencia es obligatorio',
-                    })}
-                    className="w-full pl-9 pr-3 py-2.5 text-xs bg-white border border-med-border rounded-lg text-med-text-main placeholder-med-text-muted focus:outline-none focus:ring-1 focus:ring-med-primary-600"
-                  />
-                </div>
-                {errors.licenseNumber && (
-                  <p className="text-red-500 text-[11px] mt-1">
-                    {errors.licenseNumber.message}
-                  </p>
-                )}
-              </div>
+              <Input
+                label="Número de Licencia Médica"
+                placeholder="ID-45920-X"
+                icon={<IdCard className="w-4 h-4" />}
+                error={errors.licenseNumber?.message}
+                {...register('licenseNumber', {
+                  required: 'El número de licencia es obligatorio',
+                })}
+              />
             </div>
             {/* Botones Cancelar y Guardar Doctor */}
             <div className="flex items-center justify-end gap-3 pt-6 border-t border-med-border">
@@ -515,7 +471,7 @@ function DoctorsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Columna Izquierda: Seleccion de Profesional y Previsualización */}
           <div className="lg:col-span-4 flex flex-col gap-6">
-            <Card className="p-6 bg-white border border-med-border rounded-xl shadow-xs flex flex-col gap-5">
+            <Card className="p-6 flex flex-col gap-5">
               <div>
                 <label className="block text-xs font-bold text-med-text-main mb-2">
                   Seleccionar Profesional
@@ -556,7 +512,7 @@ function DoctorsPage() {
               )}
             </Card>
             {/* Aviso informativo inferior */}
-            <div className="p-4 bg-white border border-med-border rounded-xl shadow-xs flex items-start gap-3">
+            <Card className="p-4 flex items-start gap-3">
               <span className="text-med-primary-700 text-base mt-0.5">
                 <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
               </span>
@@ -565,11 +521,11 @@ function DoctorsPage() {
                 semana calendario. Las citas ya programadas no se verán
                 afectadas automáticamente.
               </p>
-            </div>
+            </Card>
           </div>
           {/* Columna Derecha: Configuración de Horarios por Día */}
           <div className="lg:col-span-8">
-            <Card className="p-0 overflow-hidden bg-white border border-med-border rounded-xl shadow-xs">
+            <Card className="p-0 overflow-hidden">
               <div className="p-5 border-b border-med-border flex items-center justify-between">
                 <h3 className="font-bold text-med-primary-900 text-sm">
                   Configuración de Horarios
@@ -720,27 +676,12 @@ function DoctorsPage() {
             onSubmit={handleSearchSubmit}
             className="relative min-w-[240px] flex-1 sm:flex-initial"
           >
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-med-text-muted">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </span>
-            <input
+            <Input
               type="text"
               placeholder="Buscar doctor por nombre... (Enter)"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-med-border rounded-lg text-med-text-main placeholder-med-text-muted focus:outline-none focus:ring-1 focus:ring-med-primary-600"
+              icon={<Search className="w-4 h-4" />}
             />
           </form>
 
@@ -775,7 +716,7 @@ function DoctorsPage() {
       </div>
 
       {/* Tabla Principal */}
-      <Card className="p-0 overflow-hidden border-med-border">
+      <Card className="p-0 overflow-hidden">
         <div className="p-5 border-b border-med-border">
           <h2 className="text-base font-bold text-med-primary-900">
             Registros de Doctores
@@ -845,9 +786,9 @@ function DoctorsPage() {
                     {/* Botones de Acciones (Ojo, Lápiz, Basurero) */}
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 text-med-primary-600">
-                        <button
+                        <Button
+                          variant="icon"
                           title="Ver detalle"
-                          className="p-1.5 rounded-lg hover:bg-med-primary-50 text-med-primary-600 hover:text-med-primary-900 transition"
                           onClick={() =>
                             alert(
                               `Doctor: ${doc.name}\nMatrícula: ${doc.licenseNumber || 'S/D'}\nEspecialidad: ${doc.speciality?.name || 'Sin especialidad'}`
@@ -873,11 +814,11 @@ function DoctorsPage() {
                               d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                             />
                           </svg>
-                        </button>
+                        </Button>
 
-                        <button
+                        <Button
+                          variant="icon"
                           title="Editar profesional"
-                          className="p-1.5 rounded-lg hover:bg-med-primary-50 text-med-primary-600 hover:text-med-primary-900 transition"
                           onClick={() => handleOpenEditModal(doc)}
                         >
                           <svg
@@ -893,11 +834,11 @@ function DoctorsPage() {
                               d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
                             />
                           </svg>
-                        </button>
+                        </Button>
 
-                        <button
+                        <Button
+                          variant="iconDanger"
                           title="Eliminar profesional"
-                          className="p-1.5 rounded-lg hover:bg-red-50 text-med-danger-text transition"
                           onClick={() => handleDelete(doc)}
                         >
                           <svg
@@ -913,7 +854,7 @@ function DoctorsPage() {
                               d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                             />
                           </svg>
-                        </button>
+                        </Button>
                       </div>
                     </td>
                   </tr>

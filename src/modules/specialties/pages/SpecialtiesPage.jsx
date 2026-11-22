@@ -9,9 +9,11 @@ import {
   Pencil,
   Trash2,
   Save,
+  Search,
 } from 'lucide-react';
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
+import Input from '../../shared/components/Input';
 import TablePagination from '../../shared/components/TablePagination';
 import {
   getSpecialties,
@@ -198,7 +200,7 @@ function SpecialtiesPage() {
         </div>
 
         {/* Tarjeta del Formulario */}
-        <Card className="p-6 sm:p-8 bg-white border border-med-border rounded-xl shadow-xs">
+        <Card className="p-6 sm:p-8">
           <form
             onSubmit={handleSubmit(onSaveSpecialty)}
             className="flex flex-col gap-6"
@@ -210,35 +212,22 @@ function SpecialtiesPage() {
             )}
 
             {/* Nombre de la Especialidad */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-med-text-main">
-                Nombre de la Especialidad
-              </label>
-              <input
-                type="text"
-                placeholder="Ej. Cardiología Intervencionista"
-                className={`w-full border rounded-lg px-3.5 py-2.5 text-xs bg-white text-med-text-main focus:outline-none focus:ring-1 focus:ring-med-primary-600 ${errors.name
-                    ? 'border-red-400 bg-red-50/20'
-                    : 'border-med-border'
-                  }`}
-                {...register('name', {
-                  required: 'El nombre es obligatorio',
-                  minLength: {
-                    value: 3,
-                    message: 'Debe tener al menos 3 caracteres',
-                  },
-                  maxLength: {
-                    value: 100,
-                    message: 'No debe superar los 100 caracteres',
-                  },
-                })}
-              />
-              {errors.name && (
-                <p className="text-xs text-red-500 font-medium">
-                  {errors.name.message}
-                </p>
-              )}
-            </div>
+            <Input
+              label="Nombre de la Especialidad"
+              placeholder="Ej. Cardiología Intervencionista"
+              error={errors.name?.message}
+              {...register('name', {
+                required: 'El nombre es obligatorio',
+                minLength: {
+                  value: 3,
+                  message: 'Debe tener al menos 3 caracteres',
+                },
+                maxLength: {
+                  value: 100,
+                  message: 'No debe superar los 100 caracteres',
+                },
+              })}
+            />
 
             {/* Descripcion */}
             <div className="flex flex-col gap-2">
@@ -352,27 +341,12 @@ function SpecialtiesPage() {
             onSubmit={handleSearchSubmit}
             className="relative min-w-[240px] flex-1 sm:flex-initial"
           >
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-med-text-muted">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </span>
-            <input
+            <Input
               type="text"
               placeholder="Buscar especialidad..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-med-border rounded-lg text-med-text-main placeholder-med-text-muted focus:outline-none focus:ring-1 focus:ring-med-primary-600"
+              icon={<Search className="w-4 h-4" />}
             />
           </form>
 
@@ -394,7 +368,7 @@ function SpecialtiesPage() {
       )}
 
       {/* Tabla Principal de Especialidades */}
-      <Card className="p-0 overflow-hidden border-med-border">
+      <Card className="p-0 overflow-hidden">
         <div className="p-5 border-b border-med-border">
           <h2 className="text-base font-bold text-med-primary-900">
             Registros de Especialidades
@@ -453,23 +427,23 @@ function SpecialtiesPage() {
                     {/* Acciones con Pencil y Trash2 de Lucide */}
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 text-med-text-muted">
-                        <button
+                        <Button
+                          variant="icon"
                           type="button"
                           title="Editar especialidad"
-                          className="p-1.5 rounded-lg hover:bg-med-primary-50 text-med-text-muted hover:text-med-primary-900 transition cursor-pointer"
                           onClick={() => handleOpenEditModal(spec)}
                         >
                           <Pencil className="w-4 h-4" />
-                        </button>
+                        </Button>
 
-                        <button
+                        <Button
+                          variant="iconDanger"
                           type="button"
                           title="Eliminar especialidad"
-                          className="p-1.5 rounded-lg hover:bg-red-50 text-med-text-muted hover:text-red-500 transition cursor-pointer"
                           onClick={() => handleDelete(spec.id, spec.name)}
                         >
                           <Trash2 className="w-4 h-4 text-red-500" />
-                        </button>
+                        </Button>
                       </div>
                     </td>
                   </tr>

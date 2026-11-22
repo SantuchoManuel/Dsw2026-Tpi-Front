@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
+import { Mail } from 'lucide-react';
 import Button from '../../shared/components/Button';
+import Input from '../../shared/components/Input';
 import useAuth from '../../auth/hook/useAuth';
 
 function PatientLoginPage() {
@@ -71,45 +73,16 @@ function PatientLoginPage() {
 
         <form onSubmit={handleSubmit(onValid)} className="flex flex-col gap-4">
           {/* Correo Electrónico */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-med-text-main">
-              Correo Electrónico
-            </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-med-text-muted">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-              </span>
-              <input
-                type="email"
-                placeholder="paciente@medportal.com"
-                className={`w-full border rounded-lg pl-10 pr-3.5 py-2.5 text-sm bg-white text-med-text-main placeholder-med-text-muted focus:outline-none focus:ring-2 focus:ring-med-primary-600 focus:border-transparent ${
-                  errors.email
-                    ? 'border-red-400 bg-red-50/20'
-                    : 'border-med-border'
-                }`}
-                {...register('email', {
-                  required: 'El correo electrónico es obligatorio',
-                })}
-              />
-            </div>
-            {errors.email && (
-              <p className="text-xs text-red-500 font-medium">
-                {errors.email.message}
-              </p>
-            )}
-          </div>
+          <Input
+            label="Correo Electrónico"
+            type="email"
+            placeholder="paciente@medportal.com"
+            icon={<Mail className="w-4 h-4" />}
+            error={errors.email?.message}
+            {...register('email', {
+              required: 'El correo electrónico es obligatorio',
+            })}
+          />
 
           {/* DNI / Numoero de Identificacion*/}
           <div className="flex flex-col gap-1.5">

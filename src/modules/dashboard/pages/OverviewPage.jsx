@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Search } from 'lucide-react';
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
+import Input from '../../shared/components/Input';
 import { getDoctors } from '../../doctors/services/doctorsService';
 import { getSpecialties } from '../../specialties/services/specialtiesService';
 import TablePagination from '../../shared/components/TablePagination';
@@ -208,7 +210,7 @@ function OverviewPage() {
       </div>
 
       {/* Directorio de Profesionales Médicos (Tabla Resumen) */}
-      <Card className="p-0 overflow-hidden border-med-border">
+      <Card className="p-0 overflow-hidden">
         {/* Cabecera de la tabla con Buscador */}
         <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-med-border">
           <h2 className="text-base font-bold text-med-primary-900">
@@ -218,27 +220,12 @@ function OverviewPage() {
             onSubmit={handleSearchSubmit}
             className="relative w-full sm:w-72"
           >
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-med-text-muted">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </span>
-            <input
+            <Input
               type="text"
               placeholder="Buscar por nombre..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-med-primary-50/70 border border-med-border rounded-lg text-med-text-main placeholder-med-text-muted focus:outline-none focus:ring-1 focus:ring-med-primary-600"
+              icon={<Search className="w-4 h-4" />}
             />
           </form>
         </div>
@@ -290,13 +277,12 @@ function OverviewPage() {
                       {doc.speciality?.name || 'Sin especialidad'}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button
+                      <Button
+                        variant="link"
                         onClick={() => navigate('/admin/doctors')}
-                        className="text-xs font-semibold text-med-primary-700 hover:text-med-primary-900
-                        hover:underline cursor-pointer"
                       >
                         Ver Detalle
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))
