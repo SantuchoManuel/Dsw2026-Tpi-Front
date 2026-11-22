@@ -5,6 +5,7 @@ import Button from '../../shared/components/Button';
 import { getDoctors } from '../../doctors/services/doctorsService';
 import { getSpecialties } from '../../specialties/services/specialtiesService';
 import TablePagination from '../../shared/components/TablePagination';
+import { getAppointmentsByDate } from '../../appointments/services/appointmentsService';
 
 function OverviewPage() {
   const navigate = useNavigate();
@@ -15,6 +16,17 @@ function OverviewPage() {
   const [pageIndex, setPageIndex] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalSpecilities, setTotalSpecialities] = useState(0);
+  const [todayAppointments, setTodayAppointments] = useState(0);
+  
+  const fetchTodayAppointments = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const data = await getAppointmentsByDate(today);
+      setTodayAppointments(data.length);
+    } catch (err) {
+      console.error('Error al cargar turnos de hoy:', err);
+    }
+  };
 
   const fetchDoctors = async (page = pageIndex, name = searchTerm) => {
     try {
@@ -43,6 +55,7 @@ function OverviewPage() {
 
   useEffect(() => {
     fetchSpecialities();
+    fetchTodayAppointments();
   }, []);
 
   useEffect(() => {
@@ -54,33 +67,6 @@ function OverviewPage() {
     setPageIndex(1);
     fetchDoctors(1, searchTerm);
   };
-
-  /*const previewDoctors = [
-    {
-      id: 1,
-      name: 'Dr. James Wilson',
-      specialty: 'Cardiología',
-      status: 'Activo',
-      statusType: 'active',
-      avatar: '👨‍⚕️',
-    },
-    {
-      id: 2,
-      name: 'Dr. Elena Rodriguez',
-      specialty: 'Neurología',
-      status: 'Activo',
-      statusType: 'active',
-      avatar: '👩‍⚕️',
-    },
-    {
-      id: 3,
-      name: 'Dr. Robert Chen',
-      specialty: 'Pediatría',
-      status: 'De Licencia',
-      statusType: 'leave',
-      avatar: '👨‍⚕️',
-    },
-  ];*/
 
   return (
     <div className="flex flex-col gap-8">
@@ -211,7 +197,7 @@ function OverviewPage() {
               Turnos Confirmados Para Hoy
             </span>
             <p className="text-3xl sm:text-4xl font-extrabold text-med-primary-900 mt-1">
-              48
+              {todayAppointments}
             </p>
           </div>
         </Card>

@@ -4,7 +4,7 @@ import Button from '../../shared/components/Button';
 import TablePagination from '../../shared/components/TablePagination';
 import { getSpecialties } from '../../specialties/services/specialtiesService';
 import { getDoctors } from '../../doctors/services/doctorsService';
-import { instance } from '../../shared/api/axiosInstance';
+import { searchAppointments } from '../../appointments/services/appointmentsService';
 
 function AppointmentsSearchPage() {
   const [dniQuery, setDniQuery] = useState('');
@@ -57,10 +57,7 @@ function AppointmentsSearchPage() {
 
       if (dateFilter) params.date = dateFilter;
 
-      const response = await instance.get('api/appointments/search', {
-        params,
-      });
-      const data = response.data;
+      const data = await searchAppointments(params);
 
       setAppointments(data.data || []);
       setTotalItems(data.total || 0);
