@@ -9,6 +9,13 @@ import {
   getDoctorSlots,
 } from '../../doctors/services/doctorsService';
 import { createAppointment } from '../../appointments/services/appointmentsService';
+import {
+  DAY_LABELS,
+  MONTH_LABELS,
+  parseSlotDate,
+  getWeekDays,
+  groupSlotsByDay,
+} from '../helpers/calendarHelpers';
 
 function PatientHome() {
   const { user } = useAuth();
@@ -135,77 +142,7 @@ function PatientHome() {
     fetchSlots();
   }, [selectedDoctorId]);
 
-  const parseSlotDate = (slot) => {
-    if (!slot) return null;
-
-    if (slot.date) return new Date(slot.date);
-
-    const dateStr = slot.date;
-    const timeStr = slot.startTime || slot.horaDeInicio || '00:00';
-
-    if (!dateStr) return null;
-
-    return new Date(
-      `${dateStr}T${timeStr.length === 5 ? timeStr + ':00' : timeStr}`
-    );
-  };
-
-  const DAY_LABELS = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SÁB'];
-  const MONTH_LABELS = [
-    'Enero',
-    'Febrero',
-    'Marzo',
-    'Abril',
-    'Mayo',
-    'Junio',
-    'Julio',
-    'Agosto',
-    'Septiembre',
-    'Octubre',
-    'Noviembre',
-    'Diciembre',
-  ];
-
-  // Devuelve el lunes de la semana actual + offset semanas
-  const getWeekStart = (offset) => {
-    const today = new Date();
-
-    today.setHours(0, 0, 0, 0);
-    const day = today.getDay(); // 0=dom
-    const diff = day === 0 ? -6 : 1 - day; // retroceder al lunes
-    const monday = new Date(today);
-
-    monday.setDate(today.getDate() + diff + offset * 7);
-
-    return monday;
-  };
-
-  // Genera los 5 días Lun-Vie de la semana
-  const getWeekDays = (offset) => {
-    const monday = getWeekStart(offset);
-
-    return Array.from({ length: 5 }, (_, i) => {
-      const d = new Date(monday);
-
-      d.setDate(monday.getDate() + i);
-
-      return d;
-    });
-  };
-
-  // Slots agrupados por 'YYYY-MM-DD'
-  const slotsByDay = slots.reduce((acc, slot) => {
-    const fecha = parseSlotDate(slot);
-    const key = slot.date || (fecha ? fecha.toISOString().slice(0, 10) : null);
-
-    if (!key) return acc;
-
-    if (!acc[key]) acc[key] = [];
-
-    acc[key].push(slot);
-
-    return acc;
-  }, {});
+  const slotsByDay = groupSlotsByDay(slots);
 
   const handleConfirmAppointment = async () => {
     if (!selectedDoctorId || !selectedSlotId || !reason.trim()) {

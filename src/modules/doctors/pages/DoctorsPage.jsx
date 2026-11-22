@@ -1,31 +1,36 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Stethoscope, Save, IdCard, Info, Timer } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
 import TablePagination from '../../shared/components/TablePagination';
 import {
-  getDoctors,
   createDoctor,
   updateDoctor,
   deleteDoctor,
   createAvailability,
 } from '../services/doctorsService';
+import useDoctors from '../hook/useDoctors';
 import { getSpecialties } from '../../specialties/services/specialtiesService';
 
 function DoctorsPage() {
   //estos serian los estados para datos y carga
-  const [doctors, setDoctors] = useState([]);
   const [specialties, setSpecialties] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [appliedSearch, setAppliedSearch] = useState('');
+  //la lista de doctores ahora viene del hook
+  const {
+    doctors,
+    loading,
+    pageIndex,
+    setPageIndex,
+    totalPages,
+    totalCount,
+    pageSize,
+    buscar,
+    recargar,
+  } = useDoctors();
 
-  //estados de paginacion
-  const [pageIndex, setPageIndex] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const pageSize = 5;
+
 
   //estados del modal crear y editar
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -91,25 +96,8 @@ function DoctorsPage() {
     fetchSpecialties();
   }, []);
 
-  //funcion pa que traigamos a los doctores paginados
-  const fetchDoctors = useCallback(async (page, name) => {
-    try {
-      setLoading(true);
-      const data = await getDoctors({ pageSize: 5, pageIndex: page, name });
 
-      setDoctors(data.data || []);
-      setTotalCount(data.total || 0);
-      setTotalPages(Math.ceil((data.total || 0) / 5) || 1);
-    } catch (err) {
-      console.error('Error al cargar doctores en overview:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
-  useEffect(() => {
-    fetchDoctors(pageIndex, appliedSearch);
-  }, [pageIndex, appliedSearch, fetchDoctors]);
 
   //modal para crear
   const handleOpenCreateModal = () => {
@@ -144,7 +132,7 @@ function DoctorsPage() {
 
       setIsModalOpen(false);
       reset();
-      fetchDoctors(pageIndex, searchTerm);
+      recargar();
     } catch (err) {
       setFormError(
         err?.response?.data?.message || 'Error al guardar los datos del medico.'
@@ -162,17 +150,16 @@ function DoctorsPage() {
 
     try {
       await deleteDoctor(doctor.id);
-      fetchDoctors(pageIndex, searchTerm);
+      recargar();
     } catch (err) {
       alert(err?.response?.data?.message || 'Error al eliminar el doctor.');
     }
   };
 
-  //busqueda al presionar enter o cambiar una palabra
+  //busqueda al presionar enter
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    setPageIndex(1);
-    setAppliedSearch(searchTerm);
+    buscar(searchTerm);
   };
 
   //abrir el modal de disponibilidad
