@@ -1,149 +1,33 @@
-import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
 import Input from '../../shared/components/Input';
 import TablePagination from '../../shared/components/TablePagination';
-import { getSpecialties } from '../../specialties/services/specialtiesService';
-import { getDoctors } from '../../doctors/services/doctorsService';
-import { searchAppointments } from '../../appointments/services/appointmentsService';
+import StatusBadge from '../../shared/components/StatusBadge';
+import useAppointmentSearch from '../hooks/useAppointmentSearch';
+import { formatAppointmentDate } from '../helpers/appointmentHelpers';
 
 function AppointmentsSearchPage() {
-  const [dniQuery, setDniQuery] = useState('');
-  const [specialtyId, setSpecialtyId] = useState('');
-  const [doctorId, setDoctorId] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
-
-  const [specialties, setSpecialties] = useState([]);
-  const [doctors, setDoctors] = useState([]);
-  const [appointments, setAppointments] = useState([]);
-  const [totalItems, setTotalItems] = useState(0);
-  const [pageIndex, setPageIndex] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const pageSize = 10;
-
-  const [loading, setLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [activeChips, setActiveChips] = useState([]);
-  const [errorMsg, setErrorMsg] = useState('');
-
-  useEffect(() => {
-    const fetchFilters = async () => {
-      try {
-        const [specData, docData] = await Promise.all([
-          getSpecialties({ pageSize: 100, pageIndex: 1 }),
-          getDoctors({ pageSize: 100, pageIndex: 1 }),
-        ]);
-
-        setSpecialties(specData.data || []);
-        setDoctors(docData.data || []);
-      } catch (err) {
-        console.error('Error cargando filtros:', err);
-      }
-    };
-
-    fetchFilters();
-  }, []);
-
-  const fetchAppointments = async (page = 1) => {
-    try {
-      setLoading(true);
-      setErrorMsg('');
-      const params = { pageSize, pageIndex: page };
-
-      if (dniQuery.trim()) params.dni = Number(dniQuery.trim());
-
-      if (specialtyId) params.specialtyId = specialtyId;
-
-      if (doctorId) params.doctorId = doctorId;
-
-      if (dateFilter) params.date = dateFilter;
-
-      const data = await searchAppointments(params);
-
-      setAppointments(data.data || []);
-      setTotalItems(data.total || 0);
-      setTotalPages(Math.ceil((data.total || 0) / pageSize) || 1);
-      setPageIndex(page);
-      setHasSearched(true);
-
-      const chips = [];
-
-      if (dniQuery.trim()) chips.push(`Paciente: ${dniQuery.trim()}`);
-
-      if (specialtyId) {
-        const sp = specialties.find((s) => s.id === specialtyId);
-
-        if (sp) chips.push(`Especialidad: ${sp.name}`);
-      }
-
-      if (doctorId) {
-        const doc = doctors.find((d) => d.id === doctorId);
-
-        if (doc) chips.push(`Doctor: ${doc.name}`);
-      }
-
-      if (dateFilter)
-        chips.push(
-          `Filtro Activo: ${new Date(dateFilter + 'T00:00:00').toLocaleDateString('es-AR')}`
-        );
-
-      setActiveChips(chips);
-    } catch (err) {
-      console.error('Error buscando citas:', err);
-      setErrorMsg(
-        err?.response?.data?.message || 'Error al buscar. Verificá los filtros.'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleApplyFilters = () => fetchAppointments(1);
-  const handlePageChange = (p) => fetchAppointments(p);
-
-  const handleVerDetalle = (item) => {
-    const fechaObj = item.fecha ? new Date(item.fecha) : null;
-    const fechaStr = fechaObj
-      ? `${fechaObj.toLocaleDateString('es-AR')} ${fechaObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`
-      : 'Sin fecha';
-
-    window.alert(
-      `Paciente: ${item.patient?.fullName || 'Sin nombre'}\n` +
-        `DNI: ${item.patient?.dni}\n` +
-        `Doctor: ${item.doctor?.name}\n` +
-        `Especialidad: ${item.doctor?.specialty?.name}\n` +
-        `Fecha: ${fechaStr}\n` +
-        `Estado: ${item.appointmentsStatus}`
-    );
-  };
-
-  const getStatusBadge = (status) => {
-    const s = status?.toLowerCase();
-
-    if (s === 'confirmada')
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-700">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          CONFIRMADO
-        </span>
-      );
-
-    if (s === 'cancelada')
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-100 text-red-600">
-          <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-          CANCELADO
-        </span>
-      );
-
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600">
-        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-        {status?.toUpperCase() || 'S/D'}
-      </span>
-    );
-  };
+  const {
+    dniQuery, setDniQuery,
+    specialtyId, setSpecialtyId,
+    doctorId, setDoctorId,
+    dateFilter, setDateFilter,
+    specialties,
+    doctors,
+    appointments,
+    totalItems,
+    pageIndex,
+    totalPages,
+    pageSize,
+    loading,
+    hasSearched,
+    activeChips,
+    errorMsg,
+    handleApplyFilters,
+    handlePageChange,
+    handleVerDetalle,
+  } = useAppointmentSearch();
 
   return (
     <div className="flex flex-col gap-6">
@@ -353,16 +237,7 @@ function AppointmentsSearchPage() {
                 </tr>
               ) : (
                 appointments.map((item) => {
-                  const fechaObj = item.fecha ? new Date(item.fecha) : null;
-                  const dateStr = fechaObj
-                    ? fechaObj.toLocaleDateString('es-AR')
-                    : '—';
-                  const timeStr = fechaObj
-                    ? fechaObj.toLocaleTimeString('es-AR', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
-                    : '—';
+                  const { date: dateStr, time: timeStr } = formatAppointmentDate(item.fecha);
 
                   return (
                     <tr
@@ -414,7 +289,7 @@ function AppointmentsSearchPage() {
                         </p>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        {getStatusBadge(item.appointmentsStatus)}
+                        <StatusBadge status={item.appointmentsStatus} />
                       </td>
                       <td className="px-6 py-4 text-right">
                         <Button
