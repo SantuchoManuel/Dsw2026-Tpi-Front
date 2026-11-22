@@ -1,36 +1,72 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
+import { getDoctors } from '../../doctors/services/doctorsService';
+import { getSpecialties } from '../../specialties/services/specialtiesService';
+import TablePagination from '../../shared/components/TablePagination';
+import { getAppointmentsByDate } from '../../appointments/services/appointmentsService';
 
 function OverviewPage() {
   const navigate = useNavigate();
+  const [doctors, setDoctors] = useState([]);
+  const [totalDoctors, setTotalDoctors] = useState(0);
+  const [loadingDoctors, setLoadingDoctors] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [pageIndex, setPageIndex] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalSpecilities, setTotalSpecialities] = useState(0);
+  const [todayAppointments, setTodayAppointments] = useState(0);
+  
+  const fetchTodayAppointments = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const data = await getAppointmentsByDate(today);
+      setTodayAppointments(data.length);
+    } catch (err) {
+      console.error('Error al cargar turnos de hoy:', err);
+    }
+  };
 
-  const previewDoctors = [
-    {
-      id: 1,
-      name: 'Dr. James Wilson',
-      specialty: 'Cardiología',
-      status: 'Activo',
-      statusType: 'active',
-      avatar: '👨‍⚕️',
-    },
-    {
-      id: 2,
-      name: 'Dr. Elena Rodriguez',
-      specialty: 'Neurología',
-      status: 'Activo',
-      statusType: 'active',
-      avatar: '👩‍⚕️',
-    },
-    {
-      id: 3,
-      name: 'Dr. Robert Chen',
-      specialty: 'Pediatría',
-      status: 'De Licencia',
-      statusType: 'leave',
-      avatar: '👨‍⚕️',
-    },
-  ];
+  const fetchDoctors = async (page = pageIndex, name = searchTerm) => {
+    try {
+      setLoadingDoctors(true);
+      const data = await getDoctors({ pageSize: 5, pageIndex: page, name });
+
+      setDoctors(data.data || []);
+      setTotalDoctors(data.total || 0);
+      setTotalPages(Math.ceil((data.total || 0) / 5) || 1);
+    } catch (err) {
+      console.error('Error al cargar doctores en overview:', err);
+    } finally {
+      setLoadingDoctors(false);
+    }
+  };
+
+  const fetchSpecialities = async () => {
+    try {
+      const data = await getSpecialties({ pageSize: 1, pageIndex: 1 });
+
+      setTotalSpecialities(data.total || 0);
+    } catch (err) {
+      console.error('Error al cargar especialidades:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchSpecialities();
+    fetchTodayAppointments();
+  }, []);
+
+  useEffect(() => {
+    fetchDoctors(pageIndex, searchTerm);
+  }, [pageIndex]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setPageIndex(1);
+    fetchDoctors(1, searchTerm);
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -95,7 +131,7 @@ function OverviewPage() {
               Doctores Activos
             </span>
             <p className="text-3xl sm:text-4xl font-extrabold text-med-primary-900 mt-1">
-              124
+              {totalDoctors}
             </p>
           </div>
         </Card>
@@ -128,7 +164,7 @@ function OverviewPage() {
               Especialidades Activas
             </span>
             <p className="text-3xl sm:text-4xl font-extrabold text-med-primary-900 mt-1">
-              32
+              {totalSpecilities}
             </p>
           </div>
         </Card>
@@ -161,7 +197,7 @@ function OverviewPage() {
               Turnos Confirmados Para Hoy
             </span>
             <p className="text-3xl sm:text-4xl font-extrabold text-med-primary-900 mt-1">
-              48
+              {todayAppointments}
             </p>
           </div>
         </Card>
@@ -174,7 +210,10 @@ function OverviewPage() {
           <h2 className="text-base font-bold text-med-primary-900">
             Directorio de Profesionales Médicos
           </h2>
-          <div className="relative w-full sm:w-72">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="relative w-full sm:w-72"
+          >
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-med-text-muted">
               <svg
                 className="w-4 h-4"
@@ -193,9 +232,11 @@ function OverviewPage() {
             <input
               type="text"
               placeholder="Buscar por nombre..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-3 py-1.5 text-xs bg-med-primary-50/70 border border-med-border rounded-lg text-med-text-main placeholder-med-text-muted focus:outline-none focus:ring-1 focus:ring-med-primary-600"
             />
-          </div>
+          </form>
         </div>
 
         {/* Tabla */}
@@ -205,66 +246,69 @@ function OverviewPage() {
               <tr>
                 <th className="px-6 py-3.5">Nombre del Doctor</th>
                 <th className="px-6 py-3.5">Especialidad</th>
-                <th className="px-6 py-3.5">Estado de Disponibilidad</th>
                 <th className="px-6 py-3.5 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-med-border-subtle text-sm">
-              {previewDoctors.map((doc) => (
-                <tr
-                  key={doc.id}
-                  className="hover:bg-gray-50/70 transition-colors"
-                >
-                  <td className="px-6 py-4 flex items-center gap-3">
-                    <span className="w-9 h-9 rounded-full bg-med-primary-100 flex items-center justify-center text-lg">
-                      {doc.avatar}
-                    </span>
-                    <span className="font-semibold text-med-primary-900">
-                      {doc.name}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-med-text-sub">
-                    {doc.specialty}
-                  </td>
-                  <td className="px-6 py-4">
-                    {doc.statusType === 'active' ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-med-active-bg text-med-active-text">
-                        <span className="w-1.5 h-1.5 rounded-full bg-med-active-text" />
-                        {doc.status}
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-med-leave-bg text-med-leave-text">
-                        <span className="w-1.5 h-1.5 rounded-full bg-med-leave-text" />
-                        {doc.status}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => navigate('/admin/doctors')}
-                      className="text-xs font-semibold text-med-primary-700 hover:text-med-primary-900"
-                    >
-                      Ver Detalle
-                    </button>
+              {loadingDoctors ? (
+                <tr>
+                  <td
+                    colSpan="4"
+                    className="px-6 py-8 text-center text-med-text-muted text-xs"
+                  >
+                    Cargando doctores...
                   </td>
                 </tr>
-              ))}
+              ) : doctors.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan="4"
+                    className="px-6 py-8 text-center text-med-text-muted text-xs"
+                  >
+                    No hay doctores registrados.
+                  </td>
+                </tr>
+              ) : (
+                doctors.map((doc) => (
+                  <tr
+                    key={doc.id}
+                    className="hover:bg-gray-50/70 transition-colors"
+                  >
+                    <td className="px-6 py-4 flex items-center gap-3">
+                      <span className="w-9 h-9 rounded-full bg-med-primary-100 flex items-center justify-center text-lg">
+                        👨‍⚕️
+                      </span>
+                      <span className="font-semibold text-med-primary-900">
+                        {doc.name}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-med-text-sub">
+                      {doc.speciality?.name || 'Sin especialidad'}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => navigate('/admin/doctors')}
+                        className="text-xs font-semibold text-med-primary-700 hover:text-med-primary-900
+                        hover:underline cursor-pointer"
+                      >
+                        Ver Detalle
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Paginador inferior normalizado */}
-        <div className="p-4 bg-med-primary-50/50 border-t border-med-border flex items-center justify-between text-xs text-med-text-muted">
-          <span>Mostrando 3 de 124 registros</span>
-          <div className="flex items-center gap-1">
-            <button className="px-2.5 py-1 border border-med-border rounded bg-white text-med-text-sub hover:bg-gray-50">
-              ‹
-            </button>
-            <button className="px-2.5 py-1 border border-med-border rounded bg-white text-med-text-sub hover:bg-gray-50">
-              ›
-            </button>
-          </div>
-        </div>
+        <TablePagination
+          currentPage={pageIndex}
+          totalPages={totalPages}
+          totalItems={totalDoctors}
+          pageSize={5}
+          onPageChange={(newPage) => setPageIndex(newPage)}
+        />
       </Card>
     </div>
   );

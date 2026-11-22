@@ -1,94 +1,86 @@
 import { createContext, useState } from 'react';
-import { login } from '../services/login';
 import { loginAdmin } from '../services/adminLogin';
 import { loginPatient } from '../services/patientLogin';
 
 const AuthContext = createContext();
 
 function AuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    const token = localStorage.getItem('token');
+  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [role, setRole] = useState(() => localStorage.getItem('role'));
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('user');
 
-    return Boolean(token);
+    return savedUser ? JSON.parse(savedUser) : null;
   });
+
+  const isAuthenticated = Boolean(token);
 
   const singout = () => {
     localStorage.clear();
-    setIsAuthenticated(false);
+    setToken(null);
+    setRole(null);
+    setUser(null);
   };
 
-  const setAuthSession = (token) => {
-    localStorage.setItem('token', token);
-    setIsAuthenticated(true);
-  };
+  const setAuthSession = (authData, extraUserData = {}) => {
+    const receivedToken =
+      typeof authData === 'string' ? authData : authData?.token;
+    const receivedRole = typeof authData === 'object' ? authData?.role : null;
 
-  const singin = async (username, password) => {
-    const { data, error } = await login(username, password);
-
-    if (error) {
-      return { error };
+    if (receivedToken) {
+      localStorage.setItem('token', receivedToken);
+      setToken(receivedToken);
     }
 
-    setAuthSession(data);
+    if (receivedRole) {
+      localStorage.setItem('role', receivedRole);
+      setRole(receivedRole);
+    }
 
-    return { error: null };
+    if (extraUserData && Object.keys(extraUserData).length > 0) {
+      localStorage.setItem('user', JSON.stringify(extraUserData));
+      setUser(extraUserData);
+    }
   };
 
-  const singinAdmin = async (username, password) => {
-    if (
-      (username === 'admin' ||
-        username === 'admin@medportal.com' ||
-        username === 'admin@test.com') &&
-      password === 'admin123'
-    ) {
-      setAuthSession('mock-admin-token-12345');
+  const singinAdmin = async (email, password) => {
+    try {
+      const { data, error } = await loginAdmin(email, password);
+
+      if (error) return { error };
+
+      setAuthSession(data, { email });
 
       return { error: null };
+    } catch (err) {
+      return { error: err };
     }
-
-    const { data, error } = await loginAdmin(username, password);
-
-    if (error) {
-      return { error };
-    }
-
-    setAuthSession(data);
-
-    return { error: null };
   };
 
-  const singinPatient = async (username, password) => {
-    if (
-      (username === 'paciente' ||
-        username === 'paciente@medportal.com' ||
-        username === 'paciente@test.com') &&
-      password === 'paciente123'
-    ) {
-      setAuthSession('mock-patient-token-67890');
+  const singinPatient = async (email, dni) => {
+    try {
+      const { data, error } = await loginPatient(email, dni);
+
+      if (error) return { error };
+
+      setAuthSession(data, { email, dni: Number(dni) });
 
       return { error: null };
+    } catch (err) {
+      return { error: err };
     }
-
-    const { data, error } = await loginPatient(username, password);
-
-    if (error) {
-      return { error };
-    }
-
-    setAuthSession(data);
-
-    return { error: null };
   };
 
   return (
     <AuthContext.Provider
       value={{
         isAuthenticated,
-        singin,
+        token,
+        role,
+        user,
         singinAdmin,
         singinPatient,
         singout,
-        setAuthSession,
       }}
     >
       {children}
@@ -96,4 +88,4 @@ function AuthProvider({ children }) {
   );
 }
 
-export { AuthProvider, AuthContext };
+export { AuthContext, AuthProvider };
