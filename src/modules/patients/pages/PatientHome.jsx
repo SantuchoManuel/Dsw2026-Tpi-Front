@@ -12,9 +12,11 @@ import { createAppointment } from '../../appointments/services/appointmentsServi
 import {
   DAY_LABELS,
   MONTH_LABELS,
+  MONTH_SHORT,
   parseSlotDate,
   getWeekDays,
   groupSlotsByDay,
+  formatTime12h,
 } from '../helpers/calendarHelpers';
 
 function PatientHome() {
@@ -37,6 +39,8 @@ function PatientHome() {
   const [loadingSlots, setLoadingSlots] = useState(false);
 
   const [weekOffset, setWeekOffset] = useState(0);
+
+  const [selectedDayKey, setSelectedDayKey] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [confirmedModal, setConfirmedModal] = useState(false);
   const [confirmedData, setConfirmedData] = useState(null);
@@ -289,7 +293,7 @@ function PatientHome() {
       </Card>
 
       {/* 2. Card de Información del Doctor Seleccionado (Sin reseñas de doctor) */}
-      <Card className="p-5 sm:p-6 border-med-border">
+      <Card className="p-5 sm:p-6">
         {!currentDoctor ? (
           <p className="text-xs text-med-text-muted text-center py-2">
             Seleccioná una especialidad y un doctor para ver su información.
@@ -323,7 +327,7 @@ function PatientHome() {
       </Card>
 
       {/* 3. Selector Semanal de Turnos */}
-      <Card className="p-4 sm:p-6 border-med-border">
+      <Card className="p-4 sm:p-6">
         {/* Fila 1: Título + Leyenda (solo desktop) */}
         <div className="hidden md:flex items-center justify-between mb-3">
           <h3 className="font-bold text-sm sm:text-base text-med-primary-900">

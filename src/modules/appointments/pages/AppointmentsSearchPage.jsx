@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Search } from 'lucide-react';
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
+import Input from '../../shared/components/Input';
 import TablePagination from '../../shared/components/TablePagination';
 import { getSpecialties } from '../../specialties/services/specialtiesService';
 import { getDoctors } from '../../doctors/services/doctorsService';
@@ -183,31 +185,14 @@ function AppointmentsSearchPage() {
             <label className="text-xs font-semibold text-med-text-sub">
               Nombre o DNI del Paciente
             </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-med-text-muted">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </span>
-              <input
-                type="number"
-                value={dniQuery}
-                onChange={(e) => setDniQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleApplyFilters()}
-                placeholder="Ej: 12345678"
-                className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-med-border rounded-lg text-med-text-main placeholder-med-text-muted focus:outline-none focus:ring-1 focus:ring-med-primary-600"
-              />
-            </div>
+            <Input
+              type="number"
+              value={dniQuery}
+              onChange={(e) => setDniQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleApplyFilters()}
+              placeholder="Ej: 12345678"
+              icon={<Search className="w-4 h-4" />}
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -250,11 +235,10 @@ function AppointmentsSearchPage() {
             <label className="text-xs font-semibold text-med-text-sub">
               Fecha
             </label>
-            <input
+            <Input
               type="date"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-white border border-med-border rounded-lg text-med-text-main focus:outline-none focus:ring-1 focus:ring-med-primary-600"
             />
           </div>
 
@@ -302,7 +286,7 @@ function AppointmentsSearchPage() {
       </Card>
 
       {/* Tabla */}
-      <Card className="p-0 overflow-hidden border-med-border">
+      <Card className="p-0 overflow-hidden">
         <div className="p-5 border-b border-med-border flex items-center justify-between">
           <h2 className="text-base font-bold text-med-primary-900">
             Registros de Citas
@@ -433,13 +417,13 @@ function AppointmentsSearchPage() {
                         {getStatusBadge(item.appointmentsStatus)}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button
+                        <Button
+                          variant="link"
                           type="button"
                           onClick={() => handleVerDetalle(item)}
-                          className="text-xs font-semibold text-med-primary-700 hover:text-med-primary-900 hover:underline transition-colors"
                         >
                           Ver Detalle
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   );

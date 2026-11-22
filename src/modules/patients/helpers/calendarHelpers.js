@@ -15,6 +15,35 @@ export const MONTH_LABELS = [
   'Diciembre',
 ];
 
+export const MONTH_SHORT = [
+    'Ene',
+    'Feb',
+    'Mar',
+    'Abr',
+    'May',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dic',
+  ];
+
+  export const formatTime12h = (time) => {
+    if (!time) return '';
+  
+    const [h, m] = time.split(':');
+    const hora = Number(h);
+  
+    if (isNaN(hora) || !m) return time;
+  
+    const ampm = hora >= 12 ? 'PM' : 'AM';
+    const hora12 = hora % 12 || 12;
+  
+    return `${hora12}:${m} ${ampm}`;
+  };
+
 export const parseSlotDate = (slot) => {
   if (!slot) return null;
 

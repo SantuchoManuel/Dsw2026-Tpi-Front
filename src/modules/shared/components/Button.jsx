@@ -20,6 +20,12 @@ function Button({
       'text-med-text-sub hover:bg-med-primary-50 hover:text-med-primary-900 font-medium px-3 py-2 rounded-lg transition',
     danger:
       'bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition',
+    icon: 
+      'p-1.5 rounded-lg text-med-primary-600 hover:bg-med-primary-50 hover:text-med-primary-900 transition cursor-pointer',
+    iconDanger:
+      'p-1.5 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-600 transition cursor-pointer',
+    link:
+      'text-xs font-semibold text-med-primary-700 hover:text-med-primary-900 hover:underline transition cursor-pointer',
   };
 
   const appliedClass =
