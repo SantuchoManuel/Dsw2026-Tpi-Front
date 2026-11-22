@@ -5,6 +5,7 @@ import Button from '../../shared/components/Button';
 import useAuth from '../../auth/hook/useAuth';
 import {
   getDoctors,
+  getDoctorAvailabilities,
   getDoctorSlots,
 } from '../../doctors/services/doctorsService';
 import { createAppointment } from '../../appointments/services/appointmentsService';
@@ -15,6 +16,7 @@ function PatientHome() {
 
   const [specialties, setSpecialties] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const [availabilities, setAvailabilities] = useState([]);
 
   const [slots, setSlots] = useState([]);
 
@@ -28,7 +30,6 @@ function PatientHome() {
   const [loadingSlots, setLoadingSlots] = useState(false);
 
   const [weekOffset, setWeekOffset] = useState(0);
-  const [selectedDayKey, setSelectedDayKey] = useState(''); // día elegido en mobile
   const [submitting, setSubmitting] = useState(false);
   const [confirmedModal, setConfirmedModal] = useState(false);
   const [confirmedData, setConfirmedData] = useState(null);
@@ -164,33 +165,6 @@ function PatientHome() {
     'Noviembre',
     'Diciembre',
   ];
-  const MONTH_SHORT = [
-    'ENE',
-    'FEB',
-    'MAR',
-    'ABR',
-    'MAY',
-    'JUN',
-    'JUL',
-    'AGO',
-    'SEP',
-    'OCT',
-    'NOV',
-    'DIC',
-  ];
-
-  const TIME_FORMAT = { hour: '2-digit', minute: '2-digit' };
-
-  // '09:30' -> '09:30 AM' (formato del mockup mobile)
-  const formatTime12h = (time) => {
-    if (!time) return '';
-
-    const [hours, minutes] = time.split(':').map(Number);
-    const suffix = hours >= 12 ? 'PM' : 'AM';
-    const hours12 = hours % 12 || 12;
-
-    return `${String(hours12).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${suffix}`;
-  };
 
   // Devuelve el lunes de la semana actual + offset semanas
   const getWeekStart = (offset) => {
@@ -391,21 +365,19 @@ function PatientHome() {
               </div>
               <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" />
             </div>
-            <div className="min-w-0 flex-1">
-              {/* Mobile: nombre arriba y "Verificado" abajo. Desde sm: en la misma fila */}
-              <div className="flex flex-col items-start gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
-                <h2 className="max-w-full truncate text-base sm:text-lg font-bold text-med-primary-900">
+            <div className="overflow-hidden">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-base sm:text-lg font-bold text-med-primary-900">
                   {currentDoctor.name}
                 </h2>
                 <span className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-med-primary-100 text-med-primary-700">
                   Verificado
                 </span>
               </div>
-              {/* Mobile: especialidad en mayúsculas. Desde sm: como estaba */}
-              <p className="mt-1 truncate text-xs font-bold uppercase tracking-wide text-med-primary-700 sm:mt-0.5 sm:text-sm sm:font-semibold sm:normal-case sm:tracking-normal">
+              <p className="text-xs sm:text-sm font-semibold text-med-primary-700 mt-0.5">
                 {currentDoctor.speciality?.name || 'Sin especialidad'}
               </p>
-              <p className="truncate text-xs text-med-text-muted mt-0.5">
+              <p className="text-xs text-med-text-muted mt-0.5">
                 Matrícula: {currentDoctor.licenseNumber || 'S/D'}
               </p>
             </div>
@@ -461,29 +433,25 @@ function PatientHome() {
               (slotsByDay[dayKey] || []).sort((a, b) =>
                 (a.startTime || '').localeCompare(b.startTime || '')
               );
-            const getTimeDisplay = (slot) => {
-              if (slot.startTime) return slot.startTime;
+            const getTimeDisplay = (slot) =>
+              slot.startTime ||
+              (parseSlotDate(slot)
+                ? parseSlotDate(slot).toLocaleTimeString('es-AR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+                : '');
 
-              const slotDate = parseSlotDate(slot);
-
-              return slotDate
-                ? slotDate.toLocaleTimeString('es-AR', TIME_FORMAT)
-                : '';
-            };
-
-            // Mobile: el día elegido, o el primero de la semana que no pasó
             const firstOpenDay =
               weekDays.find((day) => day >= todayStart) || monday;
-            const isDayInWeek = weekDays.some(
+            const activeDayKey = weekDays.some(
               (day) => getDayKey(day) === selectedDayKey
-            );
-            const activeDayKey = isDayInWeek
+            )
               ? selectedDayKey
               : getDayKey(firstOpenDay);
             const activeDaySlots = getDaySlots(activeDayKey);
 
-            // Mobile first: seleccionado = borde azul (mockup).
-            // Desde md: seleccionado = verde (como estaba).
+
             const renderSlotButton = (slot, label) => {
               const slotId = slot.availabilitySlotId || slot.id;
               const isSelected = selectedSlotId === slotId;
@@ -528,7 +496,7 @@ function PatientHome() {
                   </button>
                 </div>
 
-                {/* ---------- MOBILE (hojas 27 y 28) ---------- */}
+              
                 <div className="md:hidden">
                   {/* Leyenda */}
                   <div className="flex items-center gap-4 text-[11px] text-med-text-sub">
@@ -658,7 +626,6 @@ function PatientHome() {
             );
           })()
         )}
-
         {/* Campo Motivo */}
         {selectedSlotId && (
           <div className="mt-5 flex flex-col gap-1.5">
