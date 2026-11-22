@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
@@ -16,8 +16,9 @@ function OverviewPage() {
   const [pageIndex, setPageIndex] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalSpecilities, setTotalSpecialities] = useState(0);
+
   const [todayAppointments, setTodayAppointments] = useState(0);
-  
+
   const fetchTodayAppointments = async () => {
     try {
       const today = new Date().toISOString().split('T')[0];
@@ -28,7 +29,9 @@ function OverviewPage() {
     }
   };
 
-  const fetchDoctors = async (page = pageIndex, name = searchTerm) => {
+  const [appliedSearch, setAppliedSearch] = useState('');
+
+  const fetchDoctors = useCallback(async (page, name) => {
     try {
       setLoadingDoctors(true);
       const data = await getDoctors({ pageSize: 5, pageIndex: page, name });
@@ -41,7 +44,7 @@ function OverviewPage() {
     } finally {
       setLoadingDoctors(false);
     }
-  };
+  }, []);
 
   const fetchSpecialities = async () => {
     try {
@@ -59,14 +62,15 @@ function OverviewPage() {
   }, []);
 
   useEffect(() => {
-    fetchDoctors(pageIndex, searchTerm);
-  }, [pageIndex]);
+    fetchDoctors(pageIndex, appliedSearch);
+  }, [pageIndex, appliedSearch, fetchDoctors]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setPageIndex(1);
-    fetchDoctors(1, searchTerm);
+    setAppliedSearch(searchTerm);
   };
+
 
   return (
     <div className="flex flex-col gap-8">

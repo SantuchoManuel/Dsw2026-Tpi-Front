@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Stethoscope, Save, IdCard, Info, Timer } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import Card from '../../shared/components/Card';
@@ -19,6 +19,7 @@ function DoctorsPage() {
   const [specialties, setSpecialties] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
 
   //estados de paginacion
   const [pageIndex, setPageIndex] = useState(1);
@@ -91,29 +92,24 @@ function DoctorsPage() {
   }, []);
 
   //funcion pa que traigamos a los doctores paginados
-  const fetchDoctors = async (page = 1, search = '') => {
+  const fetchDoctors = useCallback(async (page, name) => {
     try {
       setLoading(true);
-      const data = await getDoctors({
-        pageSize,
-        pageIndex: page,
-        name: search,
-      });
+      const data = await getDoctors({ pageSize: 5, pageIndex: page, name });
 
       setDoctors(data.data || []);
       setTotalCount(data.total || 0);
-      setTotalPages(Math.ceil((data.total || 0) / pageSize) || 1);
-      setPageIndex(data.pageIndex + 1);
+      setTotalPages(Math.ceil((data.total || 0) / 5) || 1);
     } catch (err) {
-      console.error('Error al cargar doctores:', err);
+      console.error('Error al cargar doctores en overview:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchDoctors(pageIndex, searchTerm);
-  }, [pageIndex]);
+    fetchDoctors(pageIndex, appliedSearch);
+  }, [pageIndex, appliedSearch, fetchDoctors]);
 
   //modal para crear
   const handleOpenCreateModal = () => {
@@ -176,7 +172,7 @@ function DoctorsPage() {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setPageIndex(1);
-    fetchDoctors(1, searchTerm);
+    setAppliedSearch(searchTerm);
   };
 
   //abrir el modal de disponibilidad
@@ -198,11 +194,11 @@ function DoctorsPage() {
       prev.map((item, i) =>
         i === index
           ? {
-              ...item,
-              active: !item.active,
-              startTime: !item.active ? '08:00' : '',
-              endTime: !item.active ? '16:00' : '',
-            }
+            ...item,
+            active: !item.active,
+            startTime: !item.active ? '08:00' : '',
+            endTime: !item.active ? '16:00' : '',
+          }
           : item
       )
     );
@@ -254,8 +250,8 @@ function DoctorsPage() {
 
       setAvailabilityError(
         backendDetail ||
-          err?.response?.data?.message ||
-          'Error al guardar la disponibilidad horaria.'
+        err?.response?.data?.message ||
+        'Error al guardar la disponibilidad horaria.'
       );
     }
   };
@@ -287,8 +283,8 @@ function DoctorsPage() {
 
       setAvailabilityError(
         backendDetail ||
-          err?.response?.data?.message ||
-          'Error al guardar la disponibilidad horaria'
+        err?.response?.data?.message ||
+        'Error al guardar la disponibilidad horaria'
       );
     }
   };
@@ -615,18 +611,16 @@ function DoctorsPage() {
                             className="inline-flex items-center gap-2 cursor-pointer"
                           >
                             <span
-                              className={`w-9 h-5 flex items-center rounded-full p-1 transition-colors duration-200 ease-in-out ${
-                                item.active
-                                  ? 'bg-med-primary-900'
-                                  : 'bg-gray-300'
-                              }`}
+                              className={`w-9 h-5 flex items-center rounded-full p-1 transition-colors duration-200 ease-in-out ${item.active
+                                ? 'bg-med-primary-900'
+                                : 'bg-gray-300'
+                                }`}
                             >
                               <span
-                                className={`bg-white w-3.5 h-3.5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
-                                  item.active
-                                    ? 'translate-x-4'
-                                    : 'translate-x-0'
-                                }`}
+                                className={`bg-white w-3.5 h-3.5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${item.active
+                                  ? 'translate-x-4'
+                                  : 'translate-x-0'
+                                  }`}
                               />
                             </span>
                             <span className="text-xs font-medium">
