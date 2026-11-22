@@ -40,6 +40,8 @@ function PatientHome() {
         {booking.selectedSlotId && (
           <ReasonField value={booking.reason} onChange={booking.setReason} />
         )}
+
+
       </AvailableSlotsCard>
 
       <BookingSummary
@@ -57,6 +59,7 @@ function PatientHome() {
           onViewAppointments={() => navigate('/appointments')}
           onBookAnother={booking.resetBooking}
         />
+
       )}
     </div>
   );
