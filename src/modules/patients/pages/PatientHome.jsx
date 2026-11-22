@@ -50,7 +50,6 @@ function PatientHome() {
         errorMessage={booking.errorMessage}
         onConfirm={booking.confirmAppointment}
       />
-
       {booking.confirmedData && (
         <BookingConfirmedModal
           data={booking.confirmedData}
