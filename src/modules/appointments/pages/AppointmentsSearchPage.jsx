@@ -375,9 +375,9 @@ function AppointmentsSearchPage() {
                     : '—';
                   const timeStr = fechaObj
                     ? fechaObj.toLocaleTimeString('es-AR', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
                     : '—';
 
                   return (

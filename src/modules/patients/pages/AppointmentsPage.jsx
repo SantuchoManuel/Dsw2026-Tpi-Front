@@ -114,9 +114,9 @@ function AppointmentsPage() {
                     <strong className="text-med-text-main font-semibold">
                       {fechaValida
                         ? fechaObj.toLocaleTimeString('es-AR', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
                         : '—'}{' '}
                     </strong>
                   </p>
