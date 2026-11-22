@@ -1,0 +1,67 @@
+import { Check } from 'lucide-react';
+import Button from '../../shared/components/Button';
+
+function BookingConfirmedModal({
+  data,
+  dni,
+  onViewAppointments,
+  onBookAnother,
+}) {
+  const date = new Date(data.date);
+  const dateText = date.toLocaleDateString('es-AR', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+  });
+  const timeText = date.toLocaleTimeString('es-AR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 text-center">
+        <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+          <Check className="w-7 h-7" />
+        </div>
+        <h3 className="text-xl font-bold text-med-primary-900">
+          ¡Turno Confirmado!
+        </h3>
+        <p className="text-xs text-med-text-sub mt-2 leading-relaxed">
+          Tu turno con{' '}
+          <strong className="text-med-text-main">{data.doctorName}</strong> fue
+          reservado para el{' '}
+          <strong className="text-med-text-main">
+            {dateText} a las {timeText} hs
+          </strong>
+          .
+        </p>
+        <div className="mt-5 p-3.5 bg-med-primary-50 border border-med-primary-200/60 rounded-xl text-xs text-med-primary-900 text-left space-y-1">
+          <p>
+            <strong>Motivo:</strong> {data.reason}
+          </p>
+          <p>
+            <strong>DNI Paciente:</strong> {dni}
+          </p>
+        </div>
+        <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          <Button
+            className="w-full text-xs py-2.5"
+            onClick={onViewAppointments}
+          >
+            Ver Mis Turnos
+          </Button>
+          <Button
+            variant="secondary"
+            className="w-full text-xs py-2.5"
+            onClick={onBookAnother}
+          >
+            Reservar Otro
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default BookingConfirmedModal;

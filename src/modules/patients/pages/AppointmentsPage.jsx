@@ -1,6 +1,6 @@
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../../auth/hook/useAuth';
 import { getAppointments } from '../services/GetAppointmentsService';
@@ -32,7 +32,7 @@ function AppointmentsPage() {
     },
   ];
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     if (!user?.dni) return;
 
     try {
@@ -49,11 +49,11 @@ function AppointmentsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.dni]);
 
   useEffect(() => {
     fetchAppointments();
-  }, [user?.dni]);
+  }, [user?.dni, fetchAppointments]);
 
   const handleDeleteAppointment = async (id) => {
     try {
@@ -114,9 +114,9 @@ function AppointmentsPage() {
                     <strong className="text-med-text-main font-semibold">
                       {fechaValida
                         ? fechaObj.toLocaleTimeString('es-AR', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
                         : '—'}{' '}
                     </strong>
                   </p>

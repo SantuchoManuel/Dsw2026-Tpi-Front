@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   Heart,
@@ -28,6 +28,7 @@ function SpecialtiesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
 
   // estado para el modal de crear y editar
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,12 +48,12 @@ function SpecialtiesPage() {
   });
 
   // cargar las especialidades desde la API
-  const fetchSpecialties = async (page = pageIndex, search = searchTerm) => {
+  const fetchSpecialties = useCallback(async (page, search) => {
     try {
       setIsLoading(true);
       setErrorMessage('');
       const response = await getSpecialties({
-        pageSize,
+        pageSize: 5,
         pageIndex: page,
         name: search,
       });
@@ -66,18 +67,18 @@ function SpecialtiesPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // esto se ejecuta al montar o cambiar de pagina
   useEffect(() => {
-    fetchSpecialties(pageIndex, searchTerm);
-  }, [pageIndex]);
+    fetchSpecialties(pageIndex, appliedSearch);
+  }, [pageIndex, appliedSearch, fetchSpecialties]);
 
   // manejo de búsqueda
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setPageIndex(1);
-    fetchSpecialties(1, searchTerm);
+    setAppliedSearch(searchTerm);
   };
 
   //modal para Crear

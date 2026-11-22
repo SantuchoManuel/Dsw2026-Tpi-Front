@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Stethoscope, Save, IdCard, Info, Timer } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import Card from '../../shared/components/Card';
@@ -19,6 +19,7 @@ function DoctorsPage() {
   const [specialties, setSpecialties] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
 
   //estados de paginacion
   const [pageIndex, setPageIndex] = useState(1);
@@ -91,29 +92,24 @@ function DoctorsPage() {
   }, []);
 
   //funcion pa que traigamos a los doctores paginados
-  const fetchDoctors = async (page = 1, search = '') => {
+  const fetchDoctors = useCallback(async (page, name) => {
     try {
       setLoading(true);
-      const data = await getDoctors({
-        pageSize,
-        pageIndex: page,
-        name: search,
-      });
+      const data = await getDoctors({ pageSize: 5, pageIndex: page, name });
 
       setDoctors(data.data || []);
       setTotalCount(data.total || 0);
-      setTotalPages(Math.ceil((data.total || 0) / pageSize) || 1);
-      setPageIndex(data.pageIndex + 1);
+      setTotalPages(Math.ceil((data.total || 0) / 5) || 1);
     } catch (err) {
-      console.error('Error al cargar doctores:', err);
+      console.error('Error al cargar doctores en overview:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchDoctors(pageIndex, searchTerm);
-  }, [pageIndex]);
+    fetchDoctors(pageIndex, appliedSearch);
+  }, [pageIndex, appliedSearch, fetchDoctors]);
 
   //modal para crear
   const handleOpenCreateModal = () => {
@@ -176,7 +172,7 @@ function DoctorsPage() {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setPageIndex(1);
-    fetchDoctors(1, searchTerm);
+    setAppliedSearch(searchTerm);
   };
 
   //abrir el modal de disponibilidad

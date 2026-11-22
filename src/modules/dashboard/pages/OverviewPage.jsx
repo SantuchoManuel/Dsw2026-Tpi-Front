@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
 import { getDoctors } from '../../doctors/services/doctorsService';
 import { getSpecialties } from '../../specialties/services/specialtiesService';
 import TablePagination from '../../shared/components/TablePagination';
+import { getAppointmentsByDate } from '../../appointments/services/appointmentsService';
 
 function OverviewPage() {
   const navigate = useNavigate();
@@ -16,7 +17,21 @@ function OverviewPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalSpecilities, setTotalSpecialities] = useState(0);
 
-  const fetchDoctors = async (page = pageIndex, name = searchTerm) => {
+  const [todayAppointments, setTodayAppointments] = useState(0);
+
+  const fetchTodayAppointments = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const data = await getAppointmentsByDate(today);
+      setTodayAppointments(data.length);
+    } catch (err) {
+      console.error('Error al cargar turnos de hoy:', err);
+    }
+  };
+
+  const [appliedSearch, setAppliedSearch] = useState('');
+
+  const fetchDoctors = useCallback(async (page, name) => {
     try {
       setLoadingDoctors(true);
       const data = await getDoctors({ pageSize: 5, pageIndex: page, name });
@@ -29,7 +44,7 @@ function OverviewPage() {
     } finally {
       setLoadingDoctors(false);
     }
-  };
+  }, []);
 
   const fetchSpecialities = async () => {
     try {
@@ -43,44 +58,18 @@ function OverviewPage() {
 
   useEffect(() => {
     fetchSpecialities();
+    fetchTodayAppointments();
   }, []);
 
   useEffect(() => {
-    fetchDoctors(pageIndex, searchTerm);
-  }, [pageIndex]);
+    fetchDoctors(pageIndex, appliedSearch);
+  }, [pageIndex, appliedSearch, fetchDoctors]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setPageIndex(1);
-    fetchDoctors(1, searchTerm);
+    setAppliedSearch(searchTerm);
   };
-
-  /*const previewDoctors = [
-    {
-      id: 1,
-      name: 'Dr. James Wilson',
-      specialty: 'Cardiología',
-      status: 'Activo',
-      statusType: 'active',
-      avatar: '👨‍⚕️',
-    },
-    {
-      id: 2,
-      name: 'Dr. Elena Rodriguez',
-      specialty: 'Neurología',
-      status: 'Activo',
-      statusType: 'active',
-      avatar: '👩‍⚕️',
-    },
-    {
-      id: 3,
-      name: 'Dr. Robert Chen',
-      specialty: 'Pediatría',
-      status: 'De Licencia',
-      statusType: 'leave',
-      avatar: '👨‍⚕️',
-    },
-  ];*/
 
   return (
     <div className="flex flex-col gap-8">
@@ -211,7 +200,7 @@ function OverviewPage() {
               Turnos Confirmados Para Hoy
             </span>
             <p className="text-3xl sm:text-4xl font-extrabold text-med-primary-900 mt-1">
-              48
+              {todayAppointments}
             </p>
           </div>
         </Card>
