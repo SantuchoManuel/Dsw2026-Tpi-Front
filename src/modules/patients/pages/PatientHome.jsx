@@ -5,7 +5,6 @@ import Button from '../../shared/components/Button';
 import useAuth from '../../auth/hook/useAuth';
 import {
   getDoctors,
-  getDoctorAvailabilities,
   getDoctorSlots,
 } from '../../doctors/services/doctorsService';
 import { createAppointment } from '../../appointments/services/appointmentsService';
@@ -16,7 +15,6 @@ function PatientHome() {
 
   const [specialties, setSpecialties] = useState([]);
   const [doctors, setDoctors] = useState([]);
-  const [availabilities, setAvailabilities] = useState([]);
 
   const [slots, setSlots] = useState([]);
 
@@ -30,6 +28,7 @@ function PatientHome() {
   const [loadingSlots, setLoadingSlots] = useState(false);
 
   const [weekOffset, setWeekOffset] = useState(0);
+  const [selectedDayKey, setSelectedDayKey] = useState(''); // día elegido en mobile
   const [submitting, setSubmitting] = useState(false);
   const [confirmedModal, setConfirmedModal] = useState(false);
   const [confirmedData, setConfirmedData] = useState(null);
@@ -165,6 +164,33 @@ function PatientHome() {
     'Noviembre',
     'Diciembre',
   ];
+  const MONTH_SHORT = [
+    'ENE',
+    'FEB',
+    'MAR',
+    'ABR',
+    'MAY',
+    'JUN',
+    'JUL',
+    'AGO',
+    'SEP',
+    'OCT',
+    'NOV',
+    'DIC',
+  ];
+
+  const TIME_FORMAT = { hour: '2-digit', minute: '2-digit' };
+
+  // '09:30' -> '09:30 AM' (formato del mockup mobile)
+  const formatTime12h = (time) => {
+    if (!time) return '';
+
+    const [hours, minutes] = time.split(':').map(Number);
+    const suffix = hours >= 12 ? 'PM' : 'AM';
+    const hours12 = hours % 12 || 12;
+
+    return `${String(hours12).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${suffix}`;
+  };
 
   // Devuelve el lunes de la semana actual + offset semanas
   const getWeekStart = (offset) => {
@@ -365,19 +391,21 @@ function PatientHome() {
               </div>
               <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" />
             </div>
-            <div className="overflow-hidden">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold text-med-primary-900">
+            <div className="min-w-0 flex-1">
+              {/* Mobile: nombre arriba y "Verificado" abajo. Desde sm: en la misma fila */}
+              <div className="flex flex-col items-start gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+                <h2 className="max-w-full truncate text-base sm:text-lg font-bold text-med-primary-900">
                   {currentDoctor.name}
                 </h2>
                 <span className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-med-primary-100 text-med-primary-700">
                   Verificado
                 </span>
               </div>
-              <p className="text-xs sm:text-sm font-semibold text-med-primary-700 mt-0.5">
+              {/* Mobile: especialidad en mayúsculas. Desde sm: como estaba */}
+              <p className="mt-1 truncate text-xs font-bold uppercase tracking-wide text-med-primary-700 sm:mt-0.5 sm:text-sm sm:font-semibold sm:normal-case sm:tracking-normal">
                 {currentDoctor.speciality?.name || 'Sin especialidad'}
               </p>
-              <p className="text-xs text-med-text-muted mt-0.5">
+              <p className="truncate text-xs text-med-text-muted mt-0.5">
                 Matrícula: {currentDoctor.licenseNumber || 'S/D'}
               </p>
             </div>
@@ -386,9 +414,9 @@ function PatientHome() {
       </Card>
 
       {/* 3. Selector Semanal de Turnos */}
-      <Card className="p-5 sm:p-6 border-med-border">
-        {/* Fila 1: Título + Leyenda */}
-        <div className="flex items-center justify-between mb-3">
+      <Card className="p-4 sm:p-6 border-med-border">
+        {/* Fila 1: Título + Leyenda (solo desktop) */}
+        <div className="hidden md:flex items-center justify-between mb-3">
           <h3 className="font-bold text-sm sm:text-base text-med-primary-900">
             Horarios Disponibles
           </h3>
@@ -427,11 +455,59 @@ function PatientHome() {
               'Sábado',
             ];
             const navLabel = `${DAY_FULL[monday.getDay()]} ${monday.getDate()} - ${DAY_FULL[friday.getDay()]} ${friday.getDate()}, ${MONTH_LABELS[friday.getMonth()]}`;
+            const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+            const getDayKey = (day) => day.toISOString().slice(0, 10);
+            const getDaySlots = (dayKey) =>
+              (slotsByDay[dayKey] || []).sort((a, b) =>
+                (a.startTime || '').localeCompare(b.startTime || '')
+              );
+            const getTimeDisplay = (slot) => {
+              if (slot.startTime) return slot.startTime;
+
+              const slotDate = parseSlotDate(slot);
+
+              return slotDate
+                ? slotDate.toLocaleTimeString('es-AR', TIME_FORMAT)
+                : '';
+            };
+
+            // Mobile: el día elegido, o el primero de la semana que no pasó
+            const firstOpenDay =
+              weekDays.find((day) => day >= todayStart) || monday;
+            const isDayInWeek = weekDays.some(
+              (day) => getDayKey(day) === selectedDayKey
+            );
+            const activeDayKey = isDayInWeek
+              ? selectedDayKey
+              : getDayKey(firstOpenDay);
+            const activeDaySlots = getDaySlots(activeDayKey);
+
+            // Mobile first: seleccionado = borde azul (mockup).
+            // Desde md: seleccionado = verde (como estaba).
+            const renderSlotButton = (slot, label) => {
+              const slotId = slot.availabilitySlotId || slot.id;
+              const isSelected = selectedSlotId === slotId;
+
+              return (
+                <button
+                  key={slotId}
+                  type="button"
+                  onClick={() => setSelectedSlotId(isSelected ? '' : slotId)}
+                  className={`w-full py-2.5 md:py-2 text-xs font-semibold rounded-lg border transition-all text-center ${
+                    isSelected
+                      ? 'bg-white text-med-primary-900 border-med-primary-900 ring-1 ring-med-primary-900 md:ring-0 md:bg-emerald-400 md:text-white md:border-emerald-400 md:shadow-sm'
+                      : 'bg-white border-med-border text-med-primary-900 hover:border-med-primary-600 hover:bg-med-primary-50/50'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            };
 
             return (
               <>
-                {/* Fila 2: Navegación semanal */}
-                <div className="flex items-center gap-2 mb-5">
+                {/* Navegación semanal */}
+                <div className="flex items-center gap-2 mb-3 md:mb-5">
                   <button
                     type="button"
                     onClick={() => setWeekOffset((w) => w - 1)}
@@ -440,7 +516,7 @@ function PatientHome() {
                   >
                     ‹
                   </button>
-                  <span className="text-base text-med-primary-900">
+                  <span className="text-sm font-bold md:text-base md:font-normal text-med-primary-900">
                     {navLabel}
                   </span>
                   <button
@@ -452,15 +528,98 @@ function PatientHome() {
                   </button>
                 </div>
 
-                {/* Columnas de días */}
-                <div className="grid grid-cols-5 gap-3">
+                {/* ---------- MOBILE (hojas 27 y 28) ---------- */}
+                <div className="md:hidden">
+                  {/* Leyenda */}
+                  <div className="flex items-center gap-4 text-[11px] text-med-text-sub">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-med-primary-900 inline-block" />
+                      Disponible
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                      Seleccionado
+                    </span>
+                  </div>
+
+                  <hr className="my-4 border-med-border-subtle" />
+
+                  {/* Próximos Turnos + Ver más */}
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-bold text-med-text-main">
+                      Próximos Turnos
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setWeekOffset((w) => w + 1)}
+                      className="text-xs font-semibold text-med-primary-700"
+                    >
+                      Ver más ›
+                    </button>
+                  </div>
+
+                  {/* Chips de días con scroll horizontal */}
+                  <div className="flex gap-2 overflow-x-auto pb-1 snap-x [scrollbar-width:none]">
+                    {weekDays.map((day) => {
+                      const dayKey = getDayKey(day);
+                      const isActive = dayKey === activeDayKey;
+
+                      return (
+                        <button
+                          key={dayKey}
+                          type="button"
+                          onClick={() => setSelectedDayKey(dayKey)}
+                          disabled={day < todayStart}
+                          className={`snap-start shrink-0 w-16 py-2.5 rounded-xl border flex flex-col items-center transition disabled:opacity-40 disabled:cursor-not-allowed ${
+                            isActive
+                              ? 'bg-med-primary-900 border-med-primary-900 text-white shadow-sm'
+                              : 'bg-white border-med-border text-med-primary-900'
+                          }`}
+                        >
+                          <span
+                            className={`text-[10px] font-semibold ${isActive ? 'text-white/80' : 'text-med-text-sub'}`}
+                          >
+                            {DAY_LABELS[day.getDay()]}
+                          </span>
+                          <span className="text-lg font-bold leading-tight">
+                            {day.getDate()}
+                          </span>
+                          <span
+                            className={`text-[10px] ${isActive ? 'text-white/70' : 'text-med-text-muted'}`}
+                          >
+                            {MONTH_SHORT[day.getMonth()]}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Horarios del día elegido */}
+                  <h4 className="mt-5 mb-3 text-xs font-semibold text-med-text-sub">
+                    Horarios disponibles (Bloques de 30 min)
+                  </h4>
+                  {activeDaySlots.length === 0 ? (
+                    <p className="text-xs text-med-text-muted text-center italic py-4">
+                      No hay turnos disponibles para este día.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2">
+                      {activeDaySlots.map((slot) =>
+                        renderSlotButton(
+                          slot,
+                          formatTime12h(getTimeDisplay(slot))
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* ---------- DESKTOP (md en adelante): igual que antes ---------- */}
+                <div className="hidden md:grid grid-cols-5 gap-3">
                   {weekDays.map((day) => {
-                    const dayKey = day.toISOString().slice(0, 10);
-                    const daySlots = (slotsByDay[dayKey] || []).sort((a, b) =>
-                      (a.startTime || '').localeCompare(b.startTime || '')
-                    );
-                    const isPast =
-                      day < new Date(new Date().setHours(0, 0, 0, 0));
+                    const dayKey = getDayKey(day);
+                    const daySlots = getDaySlots(dayKey);
+                    const isPast = day < todayStart;
 
                     return (
                       <div
@@ -487,35 +646,9 @@ function PatientHome() {
                             No hay turnos disponibles para este día.
                           </p>
                         ) : (
-                          daySlots.map((slot) => {
-                            const slotId = slot.availabilitySlotId || slot.id;
-                            const isSelected = selectedSlotId === slotId;
-                            const timeDisplay =
-                              slot.startTime ||
-                              (parseSlotDate(slot)
-                                ? parseSlotDate(slot).toLocaleTimeString(
-                                  'es-AR',
-                                  { hour: '2-digit', minute: '2-digit' }
-                                )
-                                : '');
-
-                            return (
-                              <button
-                                key={slotId}
-                                type="button"
-                                onClick={() =>
-                                  setSelectedSlotId(isSelected ? '' : slotId)
-                                }
-                                className={`w-full py-2 text-xs font-semibold rounded-lg border transition-all text-center ${
-                                  isSelected
-                                    ? 'bg-emerald-400 text-white border-emerald-400 shadow-sm'
-                                    : 'bg-white border-med-border text-med-primary-900 hover:border-med-primary-600 hover:bg-med-primary-50/50'
-                                }`}
-                              >
-                                {timeDisplay}
-                              </button>
-                            );
-                          })
+                          daySlots.map((slot) =>
+                            renderSlotButton(slot, getTimeDisplay(slot))
+                          )
                         )}
                       </div>
                     );
@@ -588,7 +721,7 @@ function PatientHome() {
         </div>
         <div className="flex flex-col gap-2 shrink-0">
           {errorMessage && (
-            <p className="text-xs text-red-600 text-right">{errorMessage}</p>
+            <p className="text-xs text-red-600 sm:text-right">{errorMessage}</p>
           )}
           <Button
             type="button"
