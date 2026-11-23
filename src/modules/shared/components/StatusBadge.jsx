@@ -1,7 +1,3 @@
-/**
- * StatusBadge molecule — displays an appointment status as a coloured pill.
- * @param {{ status: string }} props
- */
 function StatusBadge({ status }) {
   const s = status?.toLowerCase();
 

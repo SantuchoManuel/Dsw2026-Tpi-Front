@@ -1,8 +1,3 @@
-/**
- * Formats an ISO date string into separate date and time strings (es-AR locale).
- * @param {string|null} isoString
- * @returns {{ date: string, time: string }}
- */
 export const formatAppointmentDate = (isoString) => {
   if (!isoString) return { date: '—', time: '—' };
   const d = new Date(isoString);
@@ -12,13 +7,6 @@ export const formatAppointmentDate = (isoString) => {
   };
 };
 
-/**
- * Builds the active filter chips array from current filter state.
- * @param {{ dniQuery: string, specialtyId: string, doctorId: string, dateFilter: string }} filters
- * @param {Array} specialties
- * @param {Array} doctors
- * @returns {string[]}
- */
 export const buildSearchChips = (filters, specialties, doctors) => {
   const { dniQuery, specialtyId, doctorId, dateFilter } = filters;
   const chips = [];
@@ -44,11 +32,6 @@ export const buildSearchChips = (filters, specialties, doctors) => {
   return chips;
 };
 
-/**
- * Builds the alert detail string for a single appointment row.
- * @param {object} item - appointment object from API
- * @returns {string}
- */
 export const buildAlertDetail = (item) => {
   const { date, time } = formatAppointmentDate(item.fecha);
   const fechaStr = item.fecha ? `${date} ${time}` : 'Sin fecha';
