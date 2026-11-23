@@ -6,5 +6,5 @@ export const loginAdmin = async (email, password) => {
     password,
   });
 
-  return { data: response.data, error: null }; 
+  return { data: response.data, error: null };
 };

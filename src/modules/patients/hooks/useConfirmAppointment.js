@@ -11,12 +11,16 @@ const useConfirmAppointment = () => {
 
   const confirm = async (doctorId, slotId) => {
     if (!doctorId || !slotId || !reason.trim()) {
-      setErrorMessage('Seleccioná un doctor, un horario y escribí el motivo de la consulta.');
+      setErrorMessage(
+        'Seleccioná un doctor, un horario y escribí el motivo de la consulta.'
+      );
+
       return false;
     }
 
     if (!user?.dni) {
       setErrorMessage('No se encontró el DNI del paciente.');
+
       return false;
     }
 
@@ -29,7 +33,9 @@ const useConfirmAppointment = () => {
         patient: { dni: Number(user.dni) },
         reason: reason.trim(),
       });
+
       setConfirmedData(result);
+
       return true;
     } catch (err) {
       setErrorMessage(
@@ -37,6 +43,7 @@ const useConfirmAppointment = () => {
           err?.response?.data?.message ||
           'No se pudo confirmar el turno.'
       );
+
       return false;
     } finally {
       setSubmitting(false);
@@ -48,7 +55,15 @@ const useConfirmAppointment = () => {
     setReason('');
   };
 
-  return { reason, setReason, submitting, errorMessage, confirmedData, confirm, reset };
+  return {
+    reason,
+    setReason,
+    submitting,
+    errorMessage,
+    confirmedData,
+    confirm,
+    reset,
+  };
 };
 
 export default useConfirmAppointment;

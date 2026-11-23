@@ -61,7 +61,8 @@ const routes = [
     element: (
       <ProtectedRoute
         allowedRoles={['ADMINISTRADOR']}
-        redirectTo="/admin/login">
+        redirectTo="/admin/login"
+      >
         <DashboardLayout />
       </ProtectedRoute>
     ),

@@ -14,8 +14,17 @@ import DoctorsTable from '../components/DoctorsTable';
 function DoctorsPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { doctors, loading, pageIndex, setPageIndex, totalPages, totalCount, pageSize, buscar, recargar } =
-    useDoctors();
+  const {
+    doctors,
+    loading,
+    pageIndex,
+    setPageIndex,
+    totalPages,
+    totalCount,
+    pageSize,
+    buscar,
+    recargar,
+  } = useDoctors();
   const crud = useDoctorCrud(recargar);
   const availability = useAvailability();
 
@@ -70,7 +79,10 @@ function DoctorsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <form onSubmit={handleSearchSubmit} className="relative min-w-[240px] flex-1 sm:flex-initial">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="relative min-w-[240px] flex-1 sm:flex-initial"
+          >
             <Input
               type="text"
               placeholder="Buscar doctor por nombre... (Enter)"
@@ -80,12 +92,18 @@ function DoctorsPage() {
             />
           </form>
 
-          <Button onClick={availability.open} className="flex items-center gap-2">
+          <Button
+            onClick={availability.open}
+            className="flex items-center gap-2"
+          >
             <Clock className="w-4 h-4" />
             <span>Agregar Disponibilidad Horaria</span>
           </Button>
 
-          <Button onClick={crud.openCreate} className="flex items-center gap-1.5">
+          <Button
+            onClick={crud.openCreate}
+            className="flex items-center gap-1.5"
+          >
             <span>+</span>
             <span>Nuevo Doctor</span>
           </Button>
@@ -94,10 +112,17 @@ function DoctorsPage() {
 
       <Card className="p-0 overflow-hidden">
         <div className="p-5 border-b border-med-border">
-          <h2 className="text-base font-bold text-med-primary-900">Registros de Doctores</h2>
+          <h2 className="text-base font-bold text-med-primary-900">
+            Registros de Doctores
+          </h2>
         </div>
 
-        <DoctorsTable doctors={doctors} loading={loading} onEdit={crud.openEdit} onDelete={crud.remove} />
+        <DoctorsTable
+          doctors={doctors}
+          loading={loading}
+          onEdit={crud.openEdit}
+          onDelete={crud.remove}
+        />
 
         <TablePagination
           currentPage={pageIndex}

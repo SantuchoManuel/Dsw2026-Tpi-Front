@@ -12,6 +12,7 @@ const useBookingDoctors = () => {
       try {
         setLoading(true);
         const data = await getDoctors({ pageSize: 100, pageIndex: 1 });
+
         setAllDoctors(data.data || []);
       } catch (err) {
         console.error('Error cargando doctores:', err);
@@ -24,8 +25,10 @@ const useBookingDoctors = () => {
   }, []);
 
   const specialties = [];
+
   allDoctors.forEach((doc) => {
     const sp = doc.speciality;
+
     if (sp && !specialties.some((s) => s.specialityId === sp.specialityId)) {
       specialties.push(sp);
     }

@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { createDoctor, updateDoctor, deleteDoctor } from '../services/doctorsService';
+import {
+  createDoctor,
+  updateDoctor,
+  deleteDoctor,
+} from '../services/doctorsService';
 import { getSpecialties } from '../../specialties/services/specialtiesService';
 
 const EMPTY_FORM = { name: '', licenseNumber: '', specialityId: '' };
@@ -66,12 +70,16 @@ const useDoctorCrud = (onSaved) => {
       reset(EMPTY_FORM);
       onSaved();
     } catch (err) {
-      setFormError(err?.response?.data?.message || 'Error al guardar los datos del medico.');
+      setFormError(
+        err?.response?.data?.message || 'Error al guardar los datos del medico.'
+      );
     }
   });
 
   const remove = async (doctor) => {
-    const confirmDelete = window.confirm(`¿Esta seguro de dar de baja al Dr/a. "${doctor.name}"?`);
+    const confirmDelete = window.confirm(
+      `¿Esta seguro de dar de baja al Dr/a. "${doctor.name}"?`
+    );
 
     if (!confirmDelete) return;
 
