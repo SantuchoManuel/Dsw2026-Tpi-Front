@@ -35,6 +35,7 @@ function SpecialtiesPage() {
   };
   const handleSave = async (formData) => {
     const result = await saveSpecialty(formData, editingSpecialty?.id);
+
     if (result.ok) {
       closeForm();
     } else {
@@ -45,10 +46,14 @@ function SpecialtiesPage() {
     const confirmed = window.confirm(
       `¿Está seguro que desea eliminar la especialidad "${specialty.name}"?`
     );
+
     if (!confirmed) return;
+
     const result = await removeSpecialty(specialty.id);
+
     if (!result.ok) alert(result.message);
   };
+
   if (isFormOpen) {
     return (
       <SpecialtyForm
@@ -59,6 +64,7 @@ function SpecialtiesPage() {
       />
     );
   }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

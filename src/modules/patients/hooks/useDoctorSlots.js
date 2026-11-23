@@ -16,6 +16,7 @@ const useDoctorSlots = (doctorId) => {
 
     if (!doctorId) {
       setSlots([]);
+
       return;
     }
 
@@ -23,6 +24,7 @@ const useDoctorSlots = (doctorId) => {
       try {
         setLoading(true);
         const data = await getDoctorSlots(doctorId);
+
         setSlots((data || []).filter(isAvailable));
       } catch (err) {
         console.error('Error cargando turnos del doctor:', err);
@@ -35,12 +37,20 @@ const useDoctorSlots = (doctorId) => {
     fetchSlots();
   }, [doctorId]);
 
-  const currentSlot = slots.find((s) => getSlotId(s) === selectedSlotId) || null;
+  const currentSlot =
+    slots.find((s) => getSlotId(s) === selectedSlotId) || null;
 
   const removeSlot = (slotId) =>
     setSlots((prev) => prev.filter((s) => getSlotId(s) !== slotId));
 
-  return { slots, loading, selectedSlotId, setSelectedSlotId, currentSlot, removeSlot };
+  return {
+    slots,
+    loading,
+    selectedSlotId,
+    setSelectedSlotId,
+    currentSlot,
+    removeSlot,
+  };
 };
 
 export default useDoctorSlots;

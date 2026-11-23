@@ -34,7 +34,9 @@ const useAvailability = () => {
     fetchAllDoctors();
   }, [isOpen]);
 
-  const selectedDoctor = doctors.find((d) => String(d.id) === String(selectedDoctorId));
+  const selectedDoctor = doctors.find(
+    (d) => String(d.id) === String(selectedDoctorId)
+  );
 
   const open = () => {
     setError('');
@@ -87,7 +89,10 @@ const useAvailability = () => {
     try {
       setError('');
       setSuccess('');
-      await createAvailability({ doctorId: selectedDoctorId, days: activeDays });
+      await createAvailability({
+        doctorId: selectedDoctorId,
+        days: activeDays,
+      });
       setSuccess('¡Disponibilidad guardada con exito!');
       setTimeout(() => {
         setIsOpen(false);

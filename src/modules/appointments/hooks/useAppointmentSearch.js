@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { getSpecialties } from '../../specialties/services/specialtiesService';
 import { getDoctors } from '../../doctors/services/doctorsService';
 import { searchAppointments } from '../services/appointmentsService';
-import { buildSearchChips, buildAlertDetail } from '../helpers/appointmentHelpers';
+import {
+  buildSearchChips,
+  buildAlertDetail,
+} from '../helpers/appointmentHelpers';
 
 const PAGE_SIZE = 10;
 
 function useAppointmentSearch() {
-
   const [dniQuery, setDniQuery] = useState('');
   const [specialtyId, setSpecialtyId] = useState('');
   const [doctorId, setDoctorId] = useState('');
@@ -33,12 +35,14 @@ function useAppointmentSearch() {
           getSpecialties({ pageSize: 100, pageIndex: 1 }),
           getDoctors({ pageSize: 100, pageIndex: 1 }),
         ]);
+
         setSpecialties(specData.data || []);
         setDoctors(docData.data || []);
       } catch (err) {
         console.error('Error cargando filtros:', err);
       }
     };
+
     fetchFilters();
   }, []);
 
@@ -48,9 +52,13 @@ function useAppointmentSearch() {
       setErrorMsg('');
 
       const params = { pageSize: PAGE_SIZE, pageIndex: page };
+
       if (dniQuery.trim()) params.dni = Number(dniQuery.trim());
+
       if (specialtyId) params.specialtyId = specialtyId;
+
       if (doctorId) params.doctorId = doctorId;
+
       if (dateFilter) params.date = dateFilter;
 
       const data = await searchAppointments(params);
@@ -62,7 +70,11 @@ function useAppointmentSearch() {
       setHasSearched(true);
 
       setActiveChips(
-        buildSearchChips({ dniQuery, specialtyId, doctorId, dateFilter }, specialties, doctors)
+        buildSearchChips(
+          { dniQuery, specialtyId, doctorId, dateFilter },
+          specialties,
+          doctors
+        )
       );
     } catch (err) {
       console.error('Error buscando citas:', err);
@@ -79,11 +91,14 @@ function useAppointmentSearch() {
   const handleVerDetalle = (item) => window.alert(buildAlertDetail(item));
 
   return {
-
-    dniQuery, setDniQuery,
-    specialtyId, setSpecialtyId,
-    doctorId, setDoctorId,
-    dateFilter, setDateFilter,
+    dniQuery,
+    setDniQuery,
+    specialtyId,
+    setSpecialtyId,
+    doctorId,
+    setDoctorId,
+    dateFilter,
+    setDateFilter,
     specialties,
     doctors,
     appointments,

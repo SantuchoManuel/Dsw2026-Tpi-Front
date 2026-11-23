@@ -37,7 +37,9 @@ function SpecialtyForm({ specialty = null, error = '', onSubmit, onCancel }) {
       {/* Headerr */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-med-text-main">
-          {isEditing ? 'Modificar Especialidad' : 'Registrar Nueva Especialidad'}
+          {isEditing
+            ? 'Modificar Especialidad'
+            : 'Registrar Nueva Especialidad'}
         </h1>
         <p className="text-sm text-med-text-sub mt-1">
           Complete la información técnica y administrativa para dar de alta una
@@ -46,10 +48,7 @@ function SpecialtyForm({ specialty = null, error = '', onSubmit, onCancel }) {
       </div>
 
       <Card className="p-6 sm:p-8">
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col gap-6"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600">
               {error}

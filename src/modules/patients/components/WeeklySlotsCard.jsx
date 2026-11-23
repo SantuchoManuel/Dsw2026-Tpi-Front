@@ -53,9 +53,7 @@ function WeeklySlotsCard({
       : '');
 
   const firstOpenDay = weekDays.find((day) => day >= todayStart) || monday;
-  const activeDayKey = weekDays.some(
-    (day) => getDayKey(day) === selectedDayKey
-  )
+  const activeDayKey = weekDays.some((day) => getDayKey(day) === selectedDayKey)
     ? selectedDayKey
     : getDayKey(firstOpenDay);
   const activeDaySlots = getDaySlots(activeDayKey);

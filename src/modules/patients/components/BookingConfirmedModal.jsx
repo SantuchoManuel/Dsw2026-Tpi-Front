@@ -47,7 +47,10 @@ function BookingConfirmedModal({
           </p>
         </div>
         <div className="mt-6 flex flex-col sm:flex-row gap-3">
-          <Button className="w-full text-xs py-2.5" onClick={onViewAppointments}>
+          <Button
+            className="w-full text-xs py-2.5"
+            onClick={onViewAppointments}
+          >
             Ver Mis Turnos
           </Button>
           <Button

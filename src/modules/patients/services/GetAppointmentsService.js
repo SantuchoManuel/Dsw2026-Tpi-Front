@@ -7,4 +7,3 @@ export const getAppointments = async (dni) => {
 
   return response.data;
 };
-
