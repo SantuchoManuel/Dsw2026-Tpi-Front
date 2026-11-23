@@ -4,12 +4,6 @@ import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
 import useAuth from '../../auth/hook/useAuth';
 import {
-  getDoctors,
-  getDoctorAvailabilities,
-  getDoctorSlots,
-} from '../../doctors/services/doctorsService';
-import { createAppointment } from '../../appointments/services/appointmentsService';
-import {
   DAY_LABELS,
   MONTH_LABELS,
   MONTH_SHORT,
@@ -18,177 +12,48 @@ import {
   groupSlotsByDay,
   formatTime12h,
 } from '../helpers/calendarHelpers';
+import { useAppointmentBooking } from '../hooks/useAppointmentBooking';
 
 function PatientHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [specialties, setSpecialties] = useState([]);
-  const [doctors, setDoctors] = useState([]);
-  const [availabilities, setAvailabilities] = useState([]);
-
-  const [slots, setSlots] = useState([]);
-
-  const [selectedSpecialtyId, setSelectedSpecialtyId] = useState('');
-  const [selectedDoctorId, setSelectedDoctorId] = useState('');
-  const [selectedSlotId, setSelectedSlotId] = useState('');
-  const [reason, setReason] = useState('');
-  const [loadingSpecialties, setLoadingSpecialties] = useState(false);
-  const [loadingDoctors, setLoadingDoctors] = useState(false);
-
-  const [loadingSlots, setLoadingSlots] = useState(false);
+  const {
+    specialties,
+    doctors,
+    slots,
+    currentDoctor,
+    currentSlot,
+    selectedSpecialtyId,
+    setSelectedSpecialtyId,
+    selectedDoctorId,
+    setSelectedDoctorId,
+    selectedSlotId,
+    setSelectedSlotId,
+    reason,
+    setReason,
+    loading: {
+      specialties: loadingSpecialties,
+      doctors: loadingDoctors,
+      slots: loadingSlots,
+      submitting,
+    },
+    errorMessage,
+    confirmedModal,
+    setConfirmedModal,
+    confirmedData,
+    setConfirmedData,
+    confirmAppointment: handleConfirmAppointment,
+  } = useAppointmentBooking();
 
   const [weekOffset, setWeekOffset] = useState(0);
-
   const [selectedDayKey, setSelectedDayKey] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [confirmedModal, setConfirmedModal] = useState(false);
-  const [confirmedData, setConfirmedData] = useState(null);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  const currentDoctor = doctors.find((d) => d.id === selectedDoctorId) || null;
-  const currentSlot =
-    slots.find((s) => (s.availabilitySlotId || s.id) === selectedSlotId) ||
-    null;
-
-  useEffect(() => {
-    const fetchSpecialtiesFromDoctors = async () => {
-      try {
-        setLoadingSpecialties(true);
-        const data = await getDoctors({ pageSize: 100, pageIndex: 1 });
-        const allDoctors = data.data || [];
-        // Extraemos especialidades únicas de los doctores
-        const seen = new Set();
-        const uniqueSpecialties = [];
-
-        allDoctors.forEach((doc) => {
-          if (doc.speciality && !seen.has(doc.speciality.specialityId)) {
-            seen.add(doc.speciality.specialityId);
-            uniqueSpecialties.push(doc.speciality);
-          }
-        });
-        setSpecialties(uniqueSpecialties);
-      } catch (err) {
-        console.error('Error cargando especialidades:', err);
-      } finally {
-        setLoadingSpecialties(false);
-      }
-    };
-
-    fetchSpecialtiesFromDoctors();
-  }, []);
-
-  useEffect(() => {
-    if (!selectedSpecialtyId) {
-      setDoctors([]);
-      setSelectedDoctorId('');
-      setSlots([]);
-      setSelectedSlotId('');
-
-      return;
-    }
-
-    // Filtramos los doctores que ya cargamos
-    const fetchDoctorsBySpecialty = async () => {
-      try {
-        setLoadingDoctors(true);
-        const data = await getDoctors({ pageSize: 100, pageIndex: 1 });
-        const filtered = (data.data || []).filter(
-          (d) => d.speciality?.specialityId === selectedSpecialtyId
-        );
-
-        setDoctors(filtered);
-        setSelectedDoctorId('');
-        setSlots([]);
-        setSelectedSlotId('');
-      } catch (err) {
-        console.error('Error cargando doctores:', err);
-      } finally {
-        setLoadingDoctors(false);
-      }
-    };
-
-    fetchDoctorsBySpecialty();
-  }, [selectedSpecialtyId]);
-
-  useEffect(() => {
-    if (!selectedDoctorId) {
-      setSlots([]);
-      setSelectedSlotId('');
-
-      return;
-    }
-
-    const fetchSlots = async () => {
-      try {
-        setLoadingSlots(true);
-        const data = await getDoctorSlots(selectedDoctorId);
-        // Filtramos solo los turnos disponibles para reservar
-        const availableSlots = (data || []).filter(
-          (s) =>
-            s.status === 'AVAILABLE' ||
-            s.status === 0 ||
-            s.status === '0' ||
-            !s.status
-        );
-
-        setSlots(availableSlots);
-        setSelectedSlotId('');
-        setWeekOffset(0);
-      } catch (err) {
-        console.error('Error cargando turnos del doctor:', err);
-        setSlots([]);
-      } finally {
-        setLoadingSlots(false);
-      }
-    };
-
-    fetchSlots();
-  }, [selectedDoctorId]);
-
   const slotsByDay = groupSlotsByDay(slots);
 
-  const handleConfirmAppointment = async () => {
-    if (!selectedDoctorId || !selectedSlotId || !reason.trim()) {
-      setErrorMessage(
-        'Seleccioná un doctor, un horario y escribí el motivo de la consulta.'
-      );
-
-      return;
-    }
-
-    if (!user?.dni) {
-      setErrorMessage('No se encontró el DNI del paciente.');
-
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      setErrorMessage('');
-      const result = await createAppointment({
-        doctorId: selectedDoctorId,
-        availabilitySlotId: selectedSlotId,
-        patient: { dni: Number(user.dni) },
-        reason: reason.trim(),
-      });
-
-      setConfirmedData(result);
-      setConfirmedModal(true);
-      // Actualizamos los slots para no mostrar el que acabamos de reservar
-      setSlots((prev) =>
-        prev.filter((s) => (s.availabilitySlotId || s.id) !== selectedSlotId)
-      );
-    } catch (err) {
-      setErrorMessage(
-        err?.response?.data?.details?.[0]?.issue ||
-          err?.response?.data?.message ||
-          'No se pudo confirmar el turno.'
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  useEffect(() => {
+    setWeekOffset(0);
+    setSelectedDayKey('');
+  }, [selectedDoctorId]);
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto">
@@ -271,7 +136,7 @@ function PatientHome() {
             <Button
               type="button"
               className="w-full flex items-center justify-center gap-2 bg-med-primary-900 hover:bg-med-primary-800 text-white font-medium py-2.5 rounded-lg shadow-sm"
-              onClick={() => {}}
+              onClick={() => { }}
             >
               <svg
                 className="w-4 h-4"
@@ -402,11 +267,10 @@ function PatientHome() {
                   key={slotId}
                   type="button"
                   onClick={() => setSelectedSlotId(isSelected ? '' : slotId)}
-                  className={`w-full py-2.5 md:py-2 text-xs font-semibold rounded-lg border transition-all text-center ${
-                    isSelected
-                      ? 'bg-white text-med-primary-900 border-med-primary-900 ring-1 ring-med-primary-900 md:ring-0 md:bg-emerald-400 md:text-white md:border-emerald-400 md:shadow-sm'
-                      : 'bg-white border-med-border text-med-primary-900 hover:border-med-primary-600 hover:bg-med-primary-50/50'
-                  }`}
+                  className={`w-full py-2.5 md:py-2 text-xs font-semibold rounded-lg border transition-all text-center ${isSelected
+                    ? 'bg-white text-med-primary-900 border-med-primary-900 ring-1 ring-med-primary-900 md:ring-0 md:bg-emerald-400 md:text-white md:border-emerald-400 md:shadow-sm'
+                    : 'bg-white border-med-border text-med-primary-900 hover:border-med-primary-600 hover:bg-med-primary-50/50'
+                    }`}
                 >
                   {label}
                 </button>
@@ -437,7 +301,7 @@ function PatientHome() {
                   </button>
                 </div>
 
-              
+
                 <div className="md:hidden">
                   {/* Leyenda */}
                   <div className="flex items-center gap-4 text-[11px] text-med-text-sub">
@@ -479,11 +343,10 @@ function PatientHome() {
                           type="button"
                           onClick={() => setSelectedDayKey(dayKey)}
                           disabled={day < todayStart}
-                          className={`snap-start shrink-0 w-16 py-2.5 rounded-xl border flex flex-col items-center transition disabled:opacity-40 disabled:cursor-not-allowed ${
-                            isActive
-                              ? 'bg-med-primary-900 border-med-primary-900 text-white shadow-sm'
-                              : 'bg-white border-med-border text-med-primary-900'
-                          }`}
+                          className={`snap-start shrink-0 w-16 py-2.5 rounded-xl border flex flex-col items-center transition disabled:opacity-40 disabled:cursor-not-allowed ${isActive
+                            ? 'bg-med-primary-900 border-med-primary-900 text-white shadow-sm'
+                            : 'bg-white border-med-border text-med-primary-900'
+                            }`}
                         >
                           <span
                             className={`text-[10px] font-semibold ${isActive ? 'text-white/80' : 'text-med-text-sub'}`}

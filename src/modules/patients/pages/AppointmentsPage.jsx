@@ -1,68 +1,26 @@
 import Card from '../../shared/components/Card';
 import Button from '../../shared/components/Button';
-import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useAuth from '../../auth/hook/useAuth';
-import { getAppointments } from '../services/GetAppointmentsService';
-import { deleteAppointment } from '../services/DeleteAppointmentsService';
+import { usePatientAppointments } from '../hooks/usePatientAppointments';
 
 function AppointmentsPage() {
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const sampleAppointments = [
-    {
-      id: 1,
-      doctor: 'Dra. María González',
-      specialty: 'Cardiología',
-      date: '2026-10-28',
-      time: '10:30 hs',
-      status: 'Confirmado',
-    },
-    {
-      id: 2,
-      doctor: 'Dr. Lucas Fernández',
-      specialty: 'Traumatología',
-      date: '2026-11-05',
-      time: '15:00 hs',
-      status: 'Pendiente',
-    },
-  ];
-
-  const fetchAppointments = useCallback(async () => {
-    if (!user?.dni) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await getAppointments(user.dni);
-
-      setAppointments(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error('Error al cargar turnos:', err);
-      setError(
-        err?.response?.data?.message || 'Error al obtener tus turnos médicos.'
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.dni]);
-
-  useEffect(() => {
-    fetchAppointments();
-  }, [user?.dni, fetchAppointments]);
+  const { appointments, loading, cancelAppointment } = usePatientAppointments();
 
   const handleDeleteAppointment = async (id) => {
-    try {
-      await deleteAppointment(id);
-      fetchAppointments(); // Refresca los turnos
-    } catch (err) {
-      alert(err?.response?.data?.message || 'No se pudo cancelar el turno.');
+    const result = await cancelAppointment(id);
+    if (!result.success) {
+      alert(result.error);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-16">
+        <p className="text-sm text-med-text-sub">Cargando tus turnos...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
