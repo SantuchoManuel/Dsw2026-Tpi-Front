@@ -73,7 +73,7 @@ function AppointmentsResultsTable({
             ) : (
               appointments.map((item) => {
                 const { date: dateStr, time: timeStr } = formatAppointmentDate(
-                  item.fecha
+                  item.date || item.Date || item.fecha || item.availableTime
                 );
 
                 return (

@@ -1,9 +1,37 @@
+const MONTHS_SHORT = [
+  'Ene',
+  'Feb',
+  'Mar',
+  'Abr',
+  'May',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dic',
+];
+
 export const formatAppointmentDate = (isoString) => {
   if (!isoString) return { date: '—', time: '—' };
+
   const d = new Date(isoString);
+
+  if (isNaN(d.getTime())) return { date: '—', time: '—' };
+
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = MONTHS_SHORT[d.getMonth()];
+  const year = d.getFullYear();
+
+  const hours24 = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours24 >= 12 ? 'PM' : 'AM';
+  const hours12 = String(hours24 % 12 || 12).padStart(2, '0');
+
   return {
-    date: d.toLocaleDateString('es-AR'),
-    time: d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
+    date: `${day} ${month}, ${year}`,
+    time: `${hours12}:${minutes} ${ampm}`,
   };
 };
 
@@ -11,15 +39,17 @@ export const buildSearchChips = (filters, specialties, doctors) => {
   const { dniQuery, specialtyId, doctorId, dateFilter } = filters;
   const chips = [];
 
-  if (dniQuery.trim()) chips.push(`Paciente: ${dniQuery.trim()}`);
+  if (dniQuery.trim()) chips.push(`DNI: ${dniQuery.trim()}`);
 
   if (specialtyId) {
     const sp = specialties.find((s) => s.id === specialtyId);
+
     if (sp) chips.push(`Especialidad: ${sp.name}`);
   }
 
   if (doctorId) {
     const doc = doctors.find((d) => d.id === doctorId);
+
     if (doc) chips.push(`Doctor: ${doc.name}`);
   }
 
@@ -33,8 +63,10 @@ export const buildSearchChips = (filters, specialties, doctors) => {
 };
 
 export const buildAlertDetail = (item) => {
-  const { date, time } = formatAppointmentDate(item.fecha);
-  const fechaStr = item.fecha ? `${date} ${time}` : 'Sin fecha';
+  const rawDate = item.date || item.fecha;
+  const { date, time } = formatAppointmentDate(rawDate);
+  const fechaStr = rawDate ? `${date} - ${time}` : 'Sin fecha';
+
   return (
     `Paciente: ${item.patient?.fullName || 'Sin nombre'}\n` +
     `DNI: ${item.patient?.dni}\n` +
