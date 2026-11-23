@@ -59,13 +59,12 @@ export const parseSlotDate = (slot) => {
   );
 };
 
-// Devuelve el lunes de la semana actual + offset semanas
 export const getWeekStart = (offset) => {
   const today = new Date();
 
   today.setHours(0, 0, 0, 0);
-  const day = today.getDay(); // 0=dom
-  const diff = day === 0 ? -6 : 1 - day; // retroceder al lunes
+  const day = today.getDay(); 
+  const diff = day === 0 ? -6 : 1 - day; 
   const monday = new Date(today);
 
   monday.setDate(today.getDate() + diff + offset * 7);
@@ -73,7 +72,6 @@ export const getWeekStart = (offset) => {
   return monday;
 };
 
-// Genera los 5 días Lun-Vie de la semana
 export const getWeekDays = (offset) => {
   const monday = getWeekStart(offset);
 
@@ -86,7 +84,6 @@ export const getWeekDays = (offset) => {
   });
 };
 
-// Slots agrupados por 'YYYY-MM-DD'
 export const groupSlotsByDay = (slots) => {
   return slots.reduce((acc, slot) => {
     const fecha = parseSlotDate(slot);

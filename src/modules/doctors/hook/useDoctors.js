@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getDoctors } from '../services/doctorsService';
 
-//hook para traer los doctores con paginacion y busqueda
-//lo sacamos de DoctorsPage para que la pagina solo se encargue de mostrar
 const useDoctors = (pageSize = 5) => {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -34,7 +32,6 @@ const useDoctors = (pageSize = 5) => {
     fetchDoctors();
   }, [fetchDoctors]);
 
-  //cuando se busca volvemos a la primer pagina
   const buscar = (texto) => {
     setPageIndex(1);
     setAppliedSearch(texto);

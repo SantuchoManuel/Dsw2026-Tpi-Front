@@ -6,7 +6,6 @@ const getSlotId = (slot) => slot.availabilitySlotId || slot.id;
 const isAvailable = (s) =>
   s.status === 'AVAILABLE' || s.status === 0 || s.status === '0' || !s.status;
 
-// trae los turnos disponibles del doctor elegido
 const useDoctorSlots = (doctorId) => {
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -38,7 +37,6 @@ const useDoctorSlots = (doctorId) => {
 
   const currentSlot = slots.find((s) => getSlotId(s) === selectedSlotId) || null;
 
-  // saca de la lista el turno que se acaba de reservar
   const removeSlot = (slotId) =>
     setSlots((prev) => prev.filter((s) => getSlotId(s) !== slotId));
 

@@ -5,7 +5,6 @@ import { getSpecialties } from '../../specialties/services/specialtiesService';
 
 const EMPTY_FORM = { name: '', licenseNumber: '', specialityId: '' };
 
-// onSaved: función que se ejecuta después de guardar o borrar (recargar la tabla)
 const useDoctorCrud = (onSaved) => {
   const [specialties, setSpecialties] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -19,7 +18,6 @@ const useDoctorCrud = (onSaved) => {
     formState: { errors, isSubmitting },
   } = useForm({ defaultValues: EMPTY_FORM });
 
-  // especialidades para el select del formulario
   useEffect(() => {
     const fetchSpecialties = async () => {
       try {
@@ -54,7 +52,6 @@ const useDoctorCrud = (onSaved) => {
 
   const close = () => setIsOpen(false);
 
-  // handleSubmit valida y, si está todo bien, ejecuta la función
   const onSubmit = handleSubmit(async (formData) => {
     try {
       setFormError('');

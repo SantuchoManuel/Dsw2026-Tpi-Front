@@ -55,15 +55,12 @@ function DoctorsTable({ doctors, loading, onEdit, onDelete }) {
               <td className="px-6 py-4 text-xs text-med-text-main font-mono">
                 {doc.licenseNumber || 'S/D'}
               </td>
-
-              {/* Especialidad Badge en Píldora */}
               <td className="px-6 py-4">
                 <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-med-primary-100 text-med-primary-700">
                   {doc.speciality?.name || 'Sin especialidad'}
                 </span>
               </td>
 
-              {/* Botones de Acciones (Ojo, Lápiz, Basurero) */}
               <td className="px-6 py-4 text-right">
                 <div className="flex items-center justify-end gap-2 text-med-primary-600">
                   <Button

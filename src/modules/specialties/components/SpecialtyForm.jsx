@@ -20,7 +20,6 @@ function SpecialtyForm({ specialty = null, error = '', onSubmit, onCancel }) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-med-text-muted">
         <button
           type="button"
@@ -35,7 +34,7 @@ function SpecialtyForm({ specialty = null, error = '', onSubmit, onCancel }) {
         </span>
       </div>
 
-      {/* Encabezado */}
+      {/* Headerr */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-med-text-main">
           {isEditing ? 'Modificar Especialidad' : 'Registrar Nueva Especialidad'}

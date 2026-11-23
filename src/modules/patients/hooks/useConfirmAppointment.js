@@ -2,7 +2,6 @@ import { useState } from 'react';
 import useAuth from '../../auth/hook/useAuth';
 import { createAppointment } from '../../appointments/services/appointmentsService';
 
-// motivo de la consulta + confirmar el turno
 const useConfirmAppointment = () => {
   const { user } = useAuth();
   const [reason, setReason] = useState('');
@@ -10,7 +9,6 @@ const useConfirmAppointment = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [confirmedData, setConfirmedData] = useState(null);
 
-  // devuelve true si se pudo reservar
   const confirm = async (doctorId, slotId) => {
     if (!doctorId || !slotId || !reason.trim()) {
       setErrorMessage('Seleccioná un doctor, un horario y escribí el motivo de la consulta.');
@@ -45,7 +43,6 @@ const useConfirmAppointment = () => {
     }
   };
 
-  // para "Reservar otro"
   const reset = () => {
     setConfirmedData(null);
     setReason('');

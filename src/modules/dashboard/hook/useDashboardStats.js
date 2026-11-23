@@ -2,8 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import * as specialtiesService from '../../specialties/services/specialtiesService';
 import * as appointmentsService from '../../appointments/services/appointmentsService';
 
-// para obtener las metricas generales del dashboard 
-// recibe los servicios por parametro con valores por defecto 
 const useDashboardStats = ({
   specialtiesApi = specialtiesService,
   appointmentsApi = appointmentsService,

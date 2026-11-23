@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getDoctors } from '../../doctors/services/doctorsService';
 
-// trae los doctores una sola vez y arma las especialidades a partir de ellos
 const useBookingDoctors = () => {
   const [allDoctors, setAllDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -24,7 +23,6 @@ const useBookingDoctors = () => {
     fetchDoctors();
   }, []);
 
-  // especialidades sin repetir
   const specialties = [];
   allDoctors.forEach((doc) => {
     const sp = doc.speciality;
@@ -33,13 +31,11 @@ const useBookingDoctors = () => {
     }
   });
 
-  // doctores de la especialidad elegida
   const doctors = allDoctors.filter(
     (d) => d.speciality?.specialityId === selectedSpecialtyId
   );
   const currentDoctor = doctors.find((d) => d.id === selectedDoctorId) || null;
 
-  // al cambiar de especialidad limpiamos el doctor
   const selectSpecialty = (id) => {
     setSelectedSpecialtyId(id);
     setSelectedDoctorId('');

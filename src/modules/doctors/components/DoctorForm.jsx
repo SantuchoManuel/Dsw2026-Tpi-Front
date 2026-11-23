@@ -6,7 +6,6 @@ import Input from '../../shared/components/Input';
 function DoctorForm({ isEditing, specialties, register, errors, formError,isSubmitting, onSubmit, onCancel }) {
   return (
     <div className="flex flex-col gap-6">
-        {/* Breadcrumb de navegación */}
         <div className="flex items-center gap-2 text-sm text-med-text-muted">
           <button
             onClick={onCancel}
