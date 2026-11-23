@@ -12,39 +12,57 @@ import {
   groupSlotsByDay,
   formatTime12h,
 } from '../helpers/calendarHelpers';
-import { useAppointmentBooking } from '../hooks/useAppointmentBooking';
+import useBookingDoctors from '../hooks/useBookingDoctors';
+import useDoctorSlots from '../hooks/useDoctorSlots';
+import useConfirmAppointment from '../hooks/useConfirmAppointment';
 
 function PatientHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // 1. especialidades y doctores
   const {
     specialties,
     doctors,
-    slots,
     currentDoctor,
-    currentSlot,
     selectedSpecialtyId,
-    setSelectedSpecialtyId,
+    selectSpecialty: setSelectedSpecialtyId, // la renombramos para no tocar el JSX
     selectedDoctorId,
     setSelectedDoctorId,
+    loading: loadingDoctors,
+  } = useBookingDoctors();
+  const loadingSpecialties = loadingDoctors;
+
+  // 2. turnos del doctor elegido
+  const {
+    slots,
+    loading: loadingSlots,
     selectedSlotId,
     setSelectedSlotId,
+    currentSlot,
+    removeSlot,
+  } = useDoctorSlots(selectedDoctorId);
+
+  // 3. motivo y confirmación del turno
+  const {
     reason,
     setReason,
-    loading: {
-      specialties: loadingSpecialties,
-      doctors: loadingDoctors,
-      slots: loadingSlots,
-      submitting,
-    },
+    submitting,
     errorMessage,
-    confirmedModal,
-    setConfirmedModal,
     confirmedData,
-    setConfirmedData,
-    confirmAppointment: handleConfirmAppointment,
-  } = useAppointmentBooking();
+    confirm,
+    reset,
+  } = useConfirmAppointment();
+
+  const handleConfirmAppointment = async () => {
+    const ok = await confirm(selectedDoctorId, selectedSlotId);
+    if (ok) removeSlot(selectedSlotId);
+  };
+
+  const handleBookAnother = () => {
+    reset();
+    setSelectedSlotId('');
+  };
 
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedDayKey, setSelectedDayKey] = useState('');
@@ -519,7 +537,7 @@ function PatientHome() {
       </div>
 
       {/* Modal de Confirmación Exitosa */}
-      {confirmedModal && confirmedData && (
+      {confirmedData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 text-center">
             <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
@@ -567,12 +585,7 @@ function PatientHome() {
               <Button
                 variant="secondary"
                 className="w-full text-xs py-2.5"
-                onClick={() => {
-                  setConfirmedModal(false);
-                  setSelectedSlotId('');
-                  setReason('');
-                  setConfirmedData(null);
-                }}
+                onClick={handleBookAnother}
               >
                 Reservar Otro
               </Button>
