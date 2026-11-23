@@ -41,13 +41,11 @@ const useSpecialties = ({
     fetchSpecialties();
   }, [fetchSpecialties]);
 
-  // al buscar volvemos a la primera pagina
   const search = (text) => {
     setPageIndex(1);
     setAppliedSearch(text);
   };
 
-  // crea o edita segun si llega un id; devuelve { ok, message }
   const saveSpecialty = async (formData, editingId = null) => {
     try {
       if (editingId) {

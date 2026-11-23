@@ -1,6 +1,5 @@
 import { instance } from '../../shared/api/axiosInstance';
 
-// Obtener listado con paginado y filtro por nombre
 export const getSpecialties = async ({
   pageSize = 10,
   pageIndex = 1,
@@ -17,7 +16,6 @@ export const getSpecialties = async ({
   return response.data;
 };
 
-// Crear una nueva especialidad
 export const createSpecialty = async ({ name, description }) => {
   const response = await instance.post('api/specialities', {
     name,
@@ -27,7 +25,6 @@ export const createSpecialty = async ({ name, description }) => {
   return response.data;
 };
 
-// Actualizar una especialidad existente
 export const updateSpecialty = async (id, { name, description }) => {
   const response = await instance.put(`api/specialities/${id}`, {
     name,

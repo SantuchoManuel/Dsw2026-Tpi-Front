@@ -14,7 +14,6 @@ import DoctorsTable from '../components/DoctorsTable';
 function DoctorsPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
-  // la lógica vive en los hooks; la página solo decide qué mostrar
   const { doctors, loading, pageIndex, setPageIndex, totalPages, totalCount, pageSize, buscar, recargar } =
     useDoctors();
   const crud = useDoctorCrud(recargar);

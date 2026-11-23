@@ -17,7 +17,6 @@ function AvailabilityForm({
 }) {
   return (
     <div className="flex flex-col gap-6">
-    {/* Breadcrumb */}
     <div className="flex items-center gap-2 text-sm text-med-text-muted">
       <button
         type="button"
@@ -31,7 +30,6 @@ function AvailabilityForm({
         Disponibilidad Horaria
       </span>
     </div>
-    {/* Encabezado */}
     <div>
       <h1 className="text-2xl font-bold tracking-tight text-med-text-main">
         Gestionar Disponibilidad Horaria
@@ -52,7 +50,6 @@ function AvailabilityForm({
         {success}
       </div>
     )}
-    {/* Contenido en dos columnas*/}
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       {/* Columna Izquierda: Seleccion de Profesional y Previsualización */}
       <div className="lg:col-span-4 flex flex-col gap-6">
@@ -96,7 +93,6 @@ function AvailabilityForm({
             </div>
           )}
         </Card>
-        {/* Aviso informativo inferior */}
         <Card className="p-4 flex items-start gap-3">
           <span className="text-med-primary-700 text-base mt-0.5">
             <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
@@ -144,7 +140,6 @@ function AvailabilityForm({
                     <td className="px-6 py-4 font-semibold text-med-primary-900">
                       {item.day}
                     </td>
-                    {/* Switch Activo / Inactivo */}
                     <td className="px-6 py-4 text-center">
                       <button
                         type="button"
@@ -169,7 +164,6 @@ function AvailabilityForm({
                         </span>
                       </button>
                     </td>
-                    {/* Hora Entrada */}
                     <td className="px-6 py-4">
                       {item.active ? (
                         <input

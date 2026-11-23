@@ -43,7 +43,6 @@ function AppointmentsPage() {
           </p>
         ) : (
           appointments.map((appt) => {
-            // La API devuelve "date" en camelCase (DateTime serializado como ISO string)
             const fechaObj = new Date(appt.date);
             const fechaValida = !isNaN(fechaObj.getTime());
 

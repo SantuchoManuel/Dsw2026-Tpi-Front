@@ -15,7 +15,6 @@ function PatientHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // 1. especialidades y doctores
   const {
     specialties,
     doctors,
@@ -27,7 +26,6 @@ function PatientHome() {
     loading: loadingDoctors,
   } = useBookingDoctors();
 
-  // 2. turnos del doctor elegido
   const {
     slots,
     loading: loadingSlots,
@@ -37,7 +35,6 @@ function PatientHome() {
     removeSlot,
   } = useDoctorSlots(selectedDoctorId);
 
-  // 3. motivo y confirmación del turno
   const {
     reason,
     setReason,

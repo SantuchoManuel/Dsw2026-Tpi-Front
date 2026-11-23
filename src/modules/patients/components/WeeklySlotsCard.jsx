@@ -82,7 +82,6 @@ function WeeklySlotsCard({
 
   return (
     <Card className="p-4 sm:p-6">
-      {/* Fila 1: Título + Leyenda (solo desktop) */}
       <div className="hidden md:flex items-center justify-between mb-3">
         <h3 className="font-bold text-sm sm:text-base text-med-primary-900">
           Horarios Disponibles
@@ -109,7 +108,7 @@ function WeeklySlotsCard({
         </p>
       ) : (
         <>
-          {/* Navegación semanal */}
+          {/* Navegacion semanal */}
           <div className="flex items-center gap-2 mb-3 md:mb-5">
             <button
               type="button"
@@ -131,7 +130,6 @@ function WeeklySlotsCard({
             </button>
           </div>
 
-          {/* ---------- MOBILE ---------- */}
           <div className="md:hidden">
             <div className="flex items-center gap-4 text-[11px] text-med-text-sub">
               <span className="flex items-center gap-1.5">
@@ -159,7 +157,6 @@ function WeeklySlotsCard({
               </button>
             </div>
 
-            {/* Chips de días con scroll horizontal */}
             <div className="flex gap-2 overflow-x-auto pb-1 snap-x [scrollbar-width:none]">
               {weekDays.map((day) => {
                 const dayKey = getDayKey(day);
@@ -215,7 +212,6 @@ function WeeklySlotsCard({
             )}
           </div>
 
-          {/* ---------- DESKTOP ---------- */}
           <div className="hidden md:grid grid-cols-5 gap-3">
             {weekDays.map((day) => {
               const dayKey = getDayKey(day);

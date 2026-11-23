@@ -21,10 +21,9 @@ function PatientLayout() {
 
   return (
     <div className="min-h-screen bg-med-bg flex flex-col">
-      {/* Header Responsivo */}
+      {/* Header */}
       <header className="bg-white shadow-xs border-b border-med-border sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          {/* Logo y Enlaces Desktop */}
           <div className="flex items-center gap-6 sm:gap-8">
             <NavLink to="/" className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-med-primary-900 text-white flex items-center justify-center font-bold text-xs shadow-xs">
@@ -47,7 +46,7 @@ function PatientLayout() {
               </span>
             </NavLink>
 
-            {/* Enlaces de Navegación Desktop */}
+            {/* Enlaces de Navegacion */}
             <nav className="hidden md:flex items-center gap-2">
               <NavLink to="/" end className={getNavLinkClass}>
                 Reservar Turno
@@ -58,9 +57,7 @@ function PatientLayout() {
             </nav>
           </div>
 
-          {/* Acciones Derecha Desktop / Mobile Avatar */}
           <div className="flex items-center gap-2 sm:gap-4">
-            {/* Iconos sutiles como en el mock */}
             <button
               type="button"
               title="Notificaciones"
@@ -82,7 +79,6 @@ function PatientLayout() {
               </svg>
             </button>
 
-            {/* Avatar Paciente */}
             <div className="flex items-center gap-2.5 pl-2 sm:border-l sm:border-med-border">
               <div className="flex items-center gap-2.5 pl-2 sm:border-l sm:border-med-border">
                 <div className="w-8 h-8 rounded-full bg-med-primary-100 text-med-primary-900 font-bold text-xs flex items-center justify-center border border-med-primary-200">
@@ -101,7 +97,6 @@ function PatientLayout() {
               Salir
             </button>
 
-            {/* Botón hamburguesa móvil */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -124,7 +119,7 @@ function PatientLayout() {
           </div>
         </div>
 
-        {/* Desplegable móvil */}
+        {/* Desplegable movil */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-med-border px-4 py-3 bg-white space-y-2">
             <NavLink
@@ -169,7 +164,6 @@ function PatientLayout() {
         )}
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
         <Outlet />
       </main>

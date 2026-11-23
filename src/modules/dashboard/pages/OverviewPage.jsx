@@ -24,7 +24,6 @@ function OverviewPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Header con Título y Acciones Principales */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-med-text-main">
@@ -55,7 +54,6 @@ function OverviewPage() {
         </div>
       </div>
 
-      {/* Tarjetas de Métricas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <StatCard
           icon={<BriefcaseMedical className="w-6 h-6" />}
@@ -82,7 +80,6 @@ function OverviewPage() {
         />
       </div>
 
-      {/* Directorio de Profesionales Médicos (Tabla Resumen) */}
       <DoctorsOverviewTable
         doctors={doctors}
         loading={loading}

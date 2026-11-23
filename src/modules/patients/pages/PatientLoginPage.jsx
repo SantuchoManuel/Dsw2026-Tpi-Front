@@ -38,7 +38,7 @@ function PatientLoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-med-primary-950 px-4 py-8 sm:p-6">
-      {/* Brand Header idéntico a admin-login */}
+      {/* Header */}
       <div className="flex flex-col items-center mb-8">
         <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-3">
           <svg
@@ -60,7 +60,7 @@ function PatientLoginPage() {
         </h1>
       </div>
 
-      {/* Main Card */}
+      {/* Main */}
       <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-white/10 p-6 sm:p-10">
         <div className="mb-6">
           <h2 className="text-xl font-bold text-med-primary-900">
@@ -199,7 +199,6 @@ function PatientLoginPage() {
         </form>
       </div>
 
-      {/* Switch to Admin Portal */}
       <div className="mt-6 text-center">
         <Link
           to="/admin/login"
